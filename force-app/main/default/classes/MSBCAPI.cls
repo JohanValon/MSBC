@@ -1,0 +1,277 @@
+public with sharing class MSBCAPI {
+
+  public static final String API_ENDPOINT = 'callout:Named_Cred_01/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/';
+  public static final String ENVIRONMENT = MSBC_API_Configuration__mdt.getInstance('Dev').Environment__c;
+  public static final String COMPANY_ID = MSBC_API_Configuration__mdt.getInstance('Dev').CompanyId__c;
+
+  public static String callApi(
+    String requestEndpoint,
+    String requestMethod,
+    String body
+  ) {
+    Http http = new Http();
+    HttpRequest request = new HttpRequest();
+    request.setEndpoint(requestEndpoint);
+    request.setMethod(requestMethod);
+
+    if (body != null) {
+      request.setBody(body);
+      request.setHeader('Content-Type', 'application/json');
+    }
+
+    HttpResponse response = http.send(request);
+    final Boolean isSuccessfulResponse = String.valueOf(
+        response.getStatusCode()
+      )
+      .startsWith('20');
+
+    if (isSuccessfulResponse) {
+      return response.getBody();
+    } else {
+      ErrorResponse erRes = (ErrorResponse) JSON.deserialize(
+        response.getBody(),
+        ErrorResponse.class
+      );
+      throw new CalloutException(
+        'An Exception occured | Code : ' +
+        response.getStatusCode() +
+        ' | Status : ' +
+        response.getStatus() +
+        ' | Message : ' +
+        erRes.message +
+        ' | Body  : ' +
+        response.getBody()
+      );
+    }
+  }
+
+  public class ErrorResponse {
+    public String code { get; set; }
+    public String message { get; set; }
+  }
+
+  public static PostedZDEHeaders getHeaders() {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/postedZdeHeaders?$top=100'; //&$filter=resNo eq 'APU' and date gt 2024-01-01&$skip=100
+    requestEndpoint = requestEndpoint.replace(' ', '+');
+    return parseGetHeaders(callApi(requestEndpoint, 'GET', null));
+  }
+
+  public static CausesOfAbsences getCausesOfAbsence() {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/causesOfAbsence';
+    return parseGetCausesOfAbsence(callApi(requestEndpoint, 'GET', null));
+  }
+
+  public static EmployeesFlair getEmployeesFlair() {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employees?$filter=status eq \'Active\'';
+    requestEndpoint = requestEndpoint.replace(' ', '+');
+    return parseGetEmployeesFlair(callApi(requestEndpoint, 'GET', null));
+  }
+
+  public static EmployeesStandard getEmployeesStandard() {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employees';
+    return parseGetEmployeesStandard(callApi(requestEndpoint, 'GET', null));
+  }
+
+  public static Companies getAvailableCompanies() {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies'; // $filter=resNo eq 'APU' and date gt 2024-01-01&$skip=100
+    requestEndpoint = requestEndpoint.replace(' ', '+');
+    return parseGetAvailableCompanies(callApi(requestEndpoint, 'GET', null));
+  }
+
+  public static CreateEmployeeResponse createEmployeeAbscence( CreateEmployeeRequest requestBody ) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employeeAbsences';
+    return parseCreateEmployeeAbscence(callApi(requestEndpoint, 'POST', JSON.serialize(requestBody)));
+  }
+
+  public static EmployeeAbsences getEmployeeAbsences() {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employeeAbsences?$top=100';
+    return parseGetEmployeeAbsences(callApi(requestEndpoint, 'GET', null));
+  }
+
+  private static PostedZDEHeaders parseGetHeaders( String response ) {
+    response = response.replace('"date":', '"xdate":');
+    response = response.replace('"@odata.context":', '"odataContext":');
+    response = response.replace('"@odata.etag":', '"odataEtag":');
+    return (PostedZDEHeaders) JSON.deserialize(
+      response,
+      PostedZDEHeaders.class
+    );
+  }
+
+  private static CausesOfAbsences parseGetCausesOfAbsence( String response ) {
+    response = response.replace('"@odata.context":', '"odataContext":');
+    response = response.replace('"@odata.etag":', '"odataEtag":');
+    return (CausesOfAbsences) JSON.deserialize(
+      response,
+      CausesOfAbsences.class);
+  }
+
+  private static EmployeesFlair parseGetEmployeesFlair( String response ) {
+    response = response.replace('"@odata.context":', '"odataContext":');
+    response = response.replace('"@odata.etag":', '"odataEtag":');
+    return (EmployeesFlair) JSON.deserialize(
+      response,
+      EmployeesFlair.class);
+  }
+
+  private static EmployeesStandard parseGetEmployeesStandard( String response ) {
+    response = response.replace('"@odata.context":', '"odataContext":');
+    response = response.replace('"@odata.etag":', '"odataEtag":'); 
+    response = response.replace('"xnumber":', '"number":'); 
+    return (EmployeesStandard) JSON.deserialize(
+      response,
+      EmployeesStandard.class);
+  }
+
+  private static Companies parseGetAvailableCompanies( String response ) {
+    response = response.replace('"@odata.context":', '"odataContext":');
+    return (Companies) JSON.deserialize(
+      response,
+      Companies.class);
+  }
+
+  private static CreateEmployeeResponse parseCreateEmployeeAbscence( String response ) {
+    response = response.replace('"@odata.context":', '"odataContext":');
+    response = response.replace('"@odata.etag":', '"odataEtag":');
+    return (CreateEmployeeResponse) JSON.deserialize(
+      response,
+      CreateEmployeeResponse.class);
+  }
+
+  private static EmployeeAbsences parseGetEmployeeAbsences( String response ) {
+    response = response.replace('"@odata.context":', '"odataContext":');
+    response = response.replace('"@odata.etag":', '"odataEtag":');
+    return (EmployeeAbsences) JSON.deserialize(
+      response,
+      EmployeeAbsences.class);
+  }
+
+  public class PostedZDEHeaders {
+    public String odataContext { get; set; }
+    public List<Header> value { get; set; }
+  }
+
+  public class Header {
+    public String odataEtag { get; set; }
+    public String id { get; set; }
+    public String xdate { get; set; }
+    public String resNo { get; set; }
+    public String fromTime { get; set; }
+    public String toTime { get; set; }
+    public Decimal breakTime { get; set; }
+    public Decimal quantity { get; set; }
+    public String employeeNo { get; set; }
+  }
+
+  public class CausesOfAbsences {
+    public String odataContext { get; set; }
+    public List<AbsenceCause> value { get; set; }
+  }
+
+  public class AbsenceCause {
+    public String odataEtag { get; set; }
+    public String id { get; set; }
+    public String code { get; set; }
+    public String description { get; set; }
+  }  
+
+  public class EmployeesFlair {
+    public String odataContext { get; set; }
+    public List<EmployeeFlair> value { get; set; }
+  }
+
+  public class EmployeeFlair {
+    public String odataEtag { get; set; }
+    public String systemId { get; set; }
+    public String no { get; set; }
+    public String firstName { get; set; }
+    public String middleName { get; set; }
+    public String lastName { get; set; }
+    public String resourceNo { get; set; }
+    public String status { get; set; }
+  }
+
+  public class EmployeesStandard {
+    public String odataContext { get; set; }
+    public List<EmployeeStandard> value { get; set; }
+  }
+
+  public class EmployeeStandard {
+    public String odataEtag { get; set; }
+    public String id { get; set; }
+    public String xnumber { get; set; }
+    public String displayName { get; set; }
+    public String givenName { get; set; }
+    public String middleName { get; set; }
+    public String surname { get; set; }
+    public String jobTitle { get; set; }
+    public String addressLine1 { get; set; }
+    public String addressLine2 { get; set; }
+    public String city { get; set; }
+    public String state { get; set; }
+    public String country { get; set; }
+    public String postalCode { get; set; }
+    public String phoneNumber { get; set; }
+    public String mobilePhone { get; set; }
+    public String email { get; set; }
+    public String personalEmail { get; set; }
+    public String employmentDate { get; set; }
+    public String terminationDate { get; set; }
+    public String status { get; set; }
+    public String birthDate { get; set; }
+    public String statisticsGroupCode { get; set; }
+    public String lastModifiedDateTime { get; set; }
+  }
+
+  public class Companies {
+    public String odataContext { get; set; }
+    public List<Company> value { get; set; }
+  }
+
+  public class Company {
+    public String id { get; set; }
+    public String systemVersion { get; set; }
+    public Integer timestamp { get; set; }
+    public String name { get; set; }
+    public String displayName { get; set; }
+    public String businessProfileId { get; set; }
+    public String systemCreatedAt { get; set; }
+    public String systemCreatedBy { get; set; }
+    public String systemModifiedAt { get; set; }
+    public String systemModifiedBy { get; set; }
+  }
+
+  public class CreateEmployeeRequest {
+    public String employeeNo { get; set; }
+    public String resourceNo { get; set; }
+    public String fromDate { get; set; }
+    public String causeOfAbsenceCode { get; set; }
+    public Decimal quantityBase { get; set; }
+  }
+
+  public class CreateEmployeeResponse {
+    public String odataContext { get; set; }
+    public String odataEtag { get; set; }
+    public String id { get; set; }
+    public String employeeNo { get; set; }
+    public String resourceNo { get; set; }
+    public String fromDate { get; set; }
+    public String causeOfAbsenceCode { get; set; }
+    public Decimal quantityBase { get; set; }
+  }
+
+  public class EmployeeAbsences {
+    public String odataContext { get; set; }
+    public List<EmployeeAbsence> value { get; set; }
+  }
+
+  public class EmployeeAbsence {
+    public String odataEtag { get; set; }
+    public String id { get; set; }
+    public String employeeNo { get; set; }
+    public String resourceNo { get; set; }
+    public String fromDate { get; set; }
+    public String causeOfAbsenceCode { get; set; }
+    public Decimal quantityBase { get; set; }
+  }
+}
