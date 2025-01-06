@@ -51,7 +51,7 @@ public with sharing class MSBCAPI {
   }
 
   public static PostedZDEHeaders getHeaders() {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/postedZdeHeaders?$top=100'; //&$filter=resNo eq 'APU' and date gt 2024-01-01&$skip=100
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetHeaders(callApi(requestEndpoint, 'GET', null));
   }
