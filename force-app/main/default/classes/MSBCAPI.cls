@@ -50,8 +50,9 @@ public with sharing class MSBCAPI {
     public String message { get; set; }
   }
 
-  public static PostedZDEHeaders getHeaders() {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
+  public static PostedZDEHeaders getHeaders( String companyId ) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
+    // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetHeaders(callApi(requestEndpoint, 'GET', null));
   }
@@ -78,8 +79,8 @@ public with sharing class MSBCAPI {
     return parseGetAvailableCompanies(callApi(requestEndpoint, 'GET', null));
   }
 
-  public static CreateEmployeeResponse createEmployeeAbscence( CreateEmployeeRequest requestBody ) {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employeeAbsences';
+  public static CreateEmployeeResponse createEmployeeAbscence( String companyId, CreateEmployeeRequest requestBody ) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + CompanyId + ')/employeeAbsences';
     return parseCreateEmployeeAbscence(callApi(requestEndpoint, 'POST', JSON.serialize(requestBody)));
   }
 
