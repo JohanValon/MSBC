@@ -1,6 +1,6 @@
 public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Batchable<sObject> , Database.Stateful , Database.AllowsCallouts , Schedulable {
     Integer numberOfAbsences = 0;
-    String query = 'SELECT flair__Employee_Absence_Category__r.Name, flair__Start_Date__c, flair__Amount__c, flair__Employee_Name__c, flair__EmployeeId__c FROM flair__Absence__c WHERE flair__Approval_Status__c  = \'APPROVED\'';
+    String query = 'SELECT flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Amount__c, flair__Employee_Name__c, flair__EmployeeId__c FROM flair__Absence__c WHERE flair__Approval_Status__c  = \'APPROVED\'';
 
     public Database.QueryLocator start(Database.BatchableContext bc){
         return Database.getQueryLocator(query);
@@ -16,19 +16,18 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
         Map<String, MSBCAPI.CreateEmployeeRequest> createEmployeeMap = new Map<String, MSBCAPI.CreateEmployeeRequest>();
         List<CreateEmployeeRequestParams> createEmployeeList = new List<CreateEmployeeRequestParams>();
 
-        for(flair__Absence__c absence : scope){
+        for(flair__Absence__c absence : scope){ //Loop on absence days
             MSBCAPI.CreateEmployeeRequest employeeRequest = new MSBCAPI.CreateEmployeeRequest();
             employeeRequest.employeeNo = 'TESTMITARBEITER';
             employeeRequest.resourceNo = employeeMap.get(absence.flair__EmployeeId__c).ERP_Resource_No__c;
             employeeRequest.fromDate =  DateTime.newInstance(absence.flair__Start_Date__c, Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
             employeeRequest.quantityBase = absence.flair__Amount__c;
-            employeeRequest.causeOfAbsenceCode = 'VACATION'; // absence.flair__Employee_Absence_Category__r.Name; Paid Leave n'existe pas dans MSBC
+            employeeRequest.causeOfAbsenceCode = absence.flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c;
 
             CreateEmployeeRequestParams params = new CreateEmployeeRequestParams();
             params.companyId = employeeMap.get(absence.flair__EmployeeId__c).flair__Entity__r.flair__Migration_ID__c;
             params.data = employeeRequest;
             createEmployeeList.add(params);
-            System.debug('params: '+ params);
         }
         for (CreateEmployeeRequestParams params : createEmployeeList){
             MSBCAPI.createEmployeeAbscence(params.companyId, params.data);

@@ -4,7 +4,7 @@ public with sharing class MSBCAPI_HeaderIterable implements Iterable<MSBCAPI.Hea
     // On peut aussi y stocker les flair__Migration_ID__c
     public Iterator<MSBCAPI.Header> iterator() {
         List<MSBCAPI.Header> headers = new List<MSBCAPI.Header>();
-        for (flair__Entity__c entry : [SELECT flair__Migration_ID__c FROM flair__Entity__c]) { 
+        for (flair__Entity__c entry : [SELECT flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG']) { 
             headers.addAll(MSBCAPI.getHeaders(entry.flair__Migration_ID__c).value);
         }
         System.debug('headers' + headers);
