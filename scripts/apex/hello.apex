@@ -5,9 +5,10 @@
 // You can also execute the entire file by running the command:
 //     SFDX: Execute Anonymous Apex with Editor Contents
 
-string tempvar = 'Enter_your_name_here';
-System.debug('Hello World!');
-System.debug('My name is ' + tempvar);
+// To schedule batch jobs
 MSBCAPI.setupAPI();
+EmployeeAbsences_ScheduleBatch.start(1);
+TimeEntries_ScheduleBatch.start();
+// For test
 Database.executebatch(new TimeEntries_ScheduleBatch());
 Database.executebatch(new EmployeeAbsences_ScheduleBatch());

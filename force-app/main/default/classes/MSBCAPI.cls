@@ -56,7 +56,7 @@ public with sharing class MSBCAPI {
     for( Company cp : companies.value ) {
       companyMap.put(cp.displayName, cp.id);
     }
-    List<flair__Entity__c> entities =  [SELECT Name, flair__Migration_ID__c FROM flair__Entity__c];  
+    List<flair__Entity__c> entities =  [SELECT Name, Is_MSBC_Synched__c, flair__Migration_ID__c FROM flair__Entity__c];  
     for( flair__Entity__c entity : entities) {
       if( companyMap.containsKey(entity.Name) ) {
         entity.flair__Migration_ID__c = companyMap.get(entity.Name);
