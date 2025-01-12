@@ -67,8 +67,8 @@ public with sharing class MSBCAPI {
   }
 
   public static PostedZDEHeaders getHeaders( String companyId ) {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
-    // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).addDays(-1).format('yyyy-MM-dd');
+    // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).addDays(-1).format('yyyy-MM-dd');
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetHeaders(callApi(requestEndpoint, 'GET', null));
   }
