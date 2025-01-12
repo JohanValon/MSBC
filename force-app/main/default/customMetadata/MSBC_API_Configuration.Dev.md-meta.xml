@@ -3,10 +3,6 @@
     <label>Dev</label>
     <protected>false</protected>
     <values>
-        <field>CompanyId__c</field>
-        <value xsi:type="xsd:string">5c7105db-3494-ee11-8178-000d3aea3877</value>
-    </values>
-    <values>
         <field>Environment__c</field>
         <value xsi:type="xsd:string">dev_kuma_20240913</value>
     </values>

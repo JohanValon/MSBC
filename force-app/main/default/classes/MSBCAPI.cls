@@ -2,7 +2,6 @@ public with sharing class MSBCAPI {
 
   public static final String API_ENDPOINT = 'callout:Named_Cred_01/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/';
   public static final String ENVIRONMENT = MSBC_API_Configuration__mdt.getInstance('Dev').Environment__c;
-  public static final String COMPANY_ID = MSBC_API_Configuration__mdt.getInstance('Dev').CompanyId__c;
 
   public static String callApi(
     String requestEndpoint,
@@ -50,26 +49,43 @@ public with sharing class MSBCAPI {
     public String message { get; set; }
   }
 
+  public static void setupAPI() {
+    // Call the API to get the available companies
+    Companies companies = getAvailableCompanies();
+    Map<String, String> companyMap = new Map<String, String>();
+    for( Company cp : companies.value ) {
+      companyMap.put(cp.displayName, cp.id);
+    }
+    List<flair__Entity__c> entities =  [SELECT Name, flair__Migration_ID__c FROM flair__Entity__c];  
+    for( flair__Entity__c entity : entities) {
+      if( companyMap.containsKey(entity.Name) ) {
+        entity.flair__Migration_ID__c = companyMap.get(entity.Name);
+        entity.Is_MSBC_Synched__c = true;
+      }
+    }
+    update entities;
+  }
+
   public static PostedZDEHeaders getHeaders( String companyId ) {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
-    // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
+    // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).addDays(-1).format('yyyy-MM-dd');
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetHeaders(callApi(requestEndpoint, 'GET', null));
   }
 
-  public static CausesOfAbsences getCausesOfAbsence() {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/causesOfAbsence';
+  public static CausesOfAbsences getCausesOfAbsence(String companyId) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/causesOfAbsence';
     return parseGetCausesOfAbsence(callApi(requestEndpoint, 'GET', null));
   }
 
-  public static EmployeesFlair getEmployeesFlair() {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employees?$filter=status eq \'Active\'';
+  public static EmployeesFlair getEmployeesFlair(String companyId) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employees?$filter=status eq \'Active\'';
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetEmployeesFlair(callApi(requestEndpoint, 'GET', null));
   }
 
-  public static EmployeesStandard getEmployeesStandard() {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employees';
+  public static EmployeesStandard getEmployeesStandard(String companyId) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employees';
     return parseGetEmployeesStandard(callApi(requestEndpoint, 'GET', null));
   }
 
@@ -84,8 +100,8 @@ public with sharing class MSBCAPI {
     return parseCreateEmployeeAbscence(callApi(requestEndpoint, 'POST', JSON.serialize(requestBody)));
   }
 
-  public static EmployeeAbsences getEmployeeAbsences() {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + COMPANY_ID + ')/employeeAbsences?$top=100';
+  public static EmployeeAbsences getEmployeeAbsences(String companyId) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employeeAbsences?$top=100';
     return parseGetEmployeeAbsences(callApi(requestEndpoint, 'GET', null));
   }
 
