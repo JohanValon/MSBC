@@ -56,7 +56,7 @@ private class MSBCAPI_Test {
             Test.setMock(HttpCalloutMock.class, mock);
             Test.startTest();
             MSBCAPI.setupAPI();
-            Assert.areEqual(true, [SELECT Name, Is_MSBC_Synched__c, flair__Migration_ID__c FROM flair__Entity__c WHERE Is_MSBC_Synched__c = true].size() > 0);
+            Assert.areEqual(true, [SELECT Name, Is_MSBC_Synched__c, flair__Migration_ID__c FROM flair__Entity__c WHERE Is_MSBC_Synched__c = true].size() > 0, 'Entity not synched');
             Test.stopTest();
         }
     }
@@ -73,7 +73,7 @@ private class MSBCAPI_Test {
             Test.startTest();
             flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
             MSBCAPI.PostedZDEHeaders result = MSBCAPI.getHeaders(entity.flair__Migration_ID__c);
-            Assert.areEqual(String.isBlank(result.odataContext), false);
+            Assert.areEqual(String.isBlank(result.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
     }
@@ -90,7 +90,7 @@ private class MSBCAPI_Test {
             Test.startTest();
             flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
             MSBCAPI.CausesOfAbsences results = MSBCAPI.getCausesOfAbsence(entity.flair__Migration_ID__c);
-            Assert.areEqual(String.isBlank(results.odataContext), false);
+            Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
     }
@@ -107,7 +107,7 @@ private class MSBCAPI_Test {
             Test.startTest();
             flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
             MSBCAPI.EmployeesFlair results = MSBCAPI.getEmployeesFlair(entity.flair__Migration_ID__c);
-            Assert.areEqual(String.isBlank(results.odataContext), false);
+            Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
     }
@@ -124,7 +124,7 @@ private class MSBCAPI_Test {
             Test.startTest();
             flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
             MSBCAPI.EmployeesStandard results = MSBCAPI.getEmployeesStandard(entity.flair__Migration_ID__c);
-            Assert.areEqual(String.isBlank(results.odataContext), false);
+            Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
     }
@@ -140,7 +140,7 @@ private class MSBCAPI_Test {
             Test.setMock(HttpCalloutMock.class, mock);
             Test.startTest();
             MSBCAPI.Companies results = MSBCAPI.getAvailableCompanies();
-            Assert.areEqual(String.isBlank(results.odataContext), false);
+            Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
     }
@@ -163,7 +163,7 @@ private class MSBCAPI_Test {
             requestBody.causeOfAbsenceCode = 'VACATION' ;
             requestBody.quantityBase = 5.0 ;
             MSBCAPI.CreateEmployeeResponse results = MSBCAPI.createEmployeeAbscence(entity.flair__Migration_ID__c, requestBody);
-            Assert.areEqual(String.isBlank(results.odataContext), false);
+            Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
     }
@@ -180,7 +180,7 @@ private class MSBCAPI_Test {
             Test.startTest();
             flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
             MSBCAPI.EmployeeAbsences results = MSBCAPI.getEmployeeAbsences(entity.flair__Migration_ID__c);
-            Assert.areEqual(String.isBlank(results.odataContext), false);
+            Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
     }

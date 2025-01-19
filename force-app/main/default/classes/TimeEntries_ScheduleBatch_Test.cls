@@ -22,8 +22,81 @@
 @isTest
 private class TimeEntries_ScheduleBatch_Test {
 
+    @TestSetup
+    static void setup(){
+        Profile p = [SELECT Id FROM Profile WHERE Name='System Administrator'];
+        User admin = new User(
+            FirstName = 'Dummy',
+            LastName = 'User',
+            Alias = 'duser',
+            Email = 'dummyuser@example.com',
+            Username = 'dummyuser' + System.currentTimeMillis() + '@example.com',
+            ProfileId = p.Id,
+            TimeZoneSidKey = 'America/Los_Angeles',
+            LocaleSidKey = 'en_US',
+            EmailEncodingKey = 'UTF-8',
+            LanguageLocaleKey = 'en_US'
+        );
+
+        insert admin;
+
+        flair__Entity__c entity = new flair__Entity__c();
+        entity.Name = 'Con4Mare GmbH & Cie. KG';
+        insert entity;
+
+        System.runAs(admin){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_getAvailableCompanies_Success');
+            mock.setStatusCode(200);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            Test.startTest();
+            MSBCAPI.setupAPI();
+            Test.stopTest();
+            Assert.areEqual(true, [SELECT Name, Is_MSBC_Synched__c, flair__Migration_ID__c FROM flair__Entity__c WHERE Is_MSBC_Synched__c = true].size() > 0, 'Entity not synched');
+        }
+
+        flair__Employee__c employee = new flair__Employee__c(); 
+        employee.Name = 'John Doe';
+        employee.ERP_Resource_No__c = 'APU';
+        employee.flair__Entity__c = entity.Id;
+        insert employee;
+    }
+
     @isTest
-    static void myUnitTest() {
-        // TO DO: implement unit test
+    static void test_batch() {
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_getHeaders_Success');
+            mock.setStatusCode(200);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            Test.startTest();
+            Database.executebatch(new TimeEntries_ScheduleBatch());
+            Test.stopTest();
+            Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry__c WHERE flair__Approval_Status__c = 'PENDING'].size(), 'Time entries not created');
+            Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry_Break__c WHERE flair__Total_Break_Period_in_Hours__c != 0].size(), 'Time entry breaks not created');
+
+        }
+    }
+
+    @isTest
+    static void test_schedule() {
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_getHeaders_Success');
+            mock.setStatusCode(200);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            Test.startTest();
+            TimeEntries_ScheduleBatch.start();
+            Test.stopTest();
+            CronTrigger ct = [SELECT Id, CronExpression, TimesTriggered, NextFireTime FROM CronTrigger WHERE CronExpression = '0 0 1 ? * *'];
+            Datetime today = Datetime.now().addDays(1);
+            System.assertEquals(today.date(), ct.NextFireTime.date(), 'Job not scheduled tomorrow');
+            System.assertEquals(Datetime.newInstance(today.year(), today.month(), today.day(), 1, 0, 0).time(), ct.NextFireTime.time(), 'Job not scheduled tomorrow at 1:AM');
+        } 
     }
 }
