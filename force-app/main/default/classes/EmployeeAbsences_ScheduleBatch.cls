@@ -16,14 +16,14 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
             employeeIds.add(absence.flair__EmployeeId__c);
         }
 
-        Map<Id, flair__Employee__c> employeeMap = new Map<Id, flair__Employee__c>([SELECT ERP_Resource_No__c, flair__Entity__r.flair__Migration_ID__c  FROM flair__Employee__c WHERE Id IN :employeeIds]);
+        Map<Id, flair__Employee__c> employeeMap = new Map<Id, flair__Employee__c>([SELECT ERP_Resource_No__c, flair__Employee_Number__c, flair__Entity__r.flair__Migration_ID__c  FROM flair__Employee__c WHERE Id IN :employeeIds]);
         Map<String, MSBCAPI.CreateEmployeeRequest> createEmployeeMap = new Map<String, MSBCAPI.CreateEmployeeRequest>();
         CreateEmployeeRequestParams[] createEmployeeList = new List<CreateEmployeeRequestParams>();
 
         for(flair__Absence__c absence : scope){ 
             for(flair__Absence_Day__c absenceDay : absence.flair__Absence_Days__r){ 
                 MSBCAPI.CreateEmployeeRequest employeeRequest = new MSBCAPI.CreateEmployeeRequest();
-                employeeRequest.employeeNo = 'TESTMITARBEITER';
+                employeeRequest.employeeNo = 'TESTMITARBEITER'; //employeeMap.get(absence.flair__EmployeeId__c).flair__Employee_Number__c;
                 employeeRequest.resourceNo = employeeMap.get(absence.flair__EmployeeId__c).ERP_Resource_No__c;
                 employeeRequest.fromDate = DateTime.newInstance(absenceDay.flair__Day__c, Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
                 employeeRequest.quantityBase = absenceDay.flair__Workload_Amount_in_Minutes__c / 60;

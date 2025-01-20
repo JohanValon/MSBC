@@ -2,9 +2,8 @@ public with sharing class MSBCAPI {
 
   public static final String API_ENDPOINT = 'callout:Named_Cred_01/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/';
   public static final String ENVIRONMENT = MSBC_API_Configuration__mdt.getInstance('Dev').Environment__c;
-  private static final Integer MAX_RETRIES = 3;
-  // private static final Integer DELAY_TIME_MINUTES = 5; // Delay time in minutes
-  private static Integer retryCount;
+  private static final Integer MAX_RETRIES = (Integer) MSBC_API_Configuration__mdt.getInstance('Dev').Max_Retries__c;
+  private static Integer retryCount = 0;
 
   public static String callApi(
     String requestEndpoint,
@@ -30,9 +29,11 @@ public with sharing class MSBCAPI {
         retryCount++;
         if (retryCount < MAX_RETRIES) {
             // Schedule the retry after the delay time
+            Logger.info('Number of Retries : ' + retryCount);
             CalloutRetryHandler.scheduleRetry(requestEndpoint, requestMethod, body);
         } else {
           Logger.info('Max retries reached. Callout failed.');
+          CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
         }
       }
     } catch (Exception ex) {
@@ -40,9 +41,11 @@ public with sharing class MSBCAPI {
       retryCount++;
       if (retryCount < MAX_RETRIES) {
           // Schedule the retry after the delay time
+          Logger.info('Number of Retries : ' + retryCount);
           CalloutRetryHandler.scheduleRetry(requestEndpoint, requestMethod, body);
       } else {
           Logger.info('Max retries reached. Callout failed.');
+          CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
       }
     }
     return null;
@@ -71,7 +74,7 @@ public with sharing class MSBCAPI {
   }
 
   public static PostedZDEHeaders getHeaders( String companyId ) {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'AF\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
     // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).addDays(-1).format('yyyy-MM-dd');
     requestEndpoint = requestEndpoint.replace(' ', '+');
     retryCount = 0;
