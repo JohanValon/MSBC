@@ -53,6 +53,26 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     
     Database.UpsertResult[] timeBreaksResults = Database.upsert(timeBreaks, flair__Time_Entry_Break__c.flair__Migration_ID__c, true, AccessLevel.SYSTEM_MODE);
     Logger.info('Processed time entry break records', timeBreaksResults);
+
+    Map<String, flair__Time_Entry__c> timeEntriesProcessedMap = new Map<String, flair__Time_Entry__c>();
+    flair__Time_Entry__c[] timeEntriesToDelete = new List<flair__Time_Entry__c>();
+    for(flair__Time_Entry__c  timeEntry : [SELECT Id, flair__Start_Datetime__c, flair__Employee__r.ERP_Resource_No__c, CreatedDate FROM flair__Time_Entry__c WHERE flair__Employee__c IN :employeeMap.values()]) {
+      String key = timeEntry.flair__Employee__r.ERP_Resource_No__c + timeEntry.flair__Start_Datetime__c.format('yyyy-MM-dd');
+      if (!timeEntriesProcessedMap.containsKey(key)) {
+        timeEntriesProcessedMap.put(key, timeEntry);
+      } else {
+        if(timeEntriesProcessedMap.get(key).CreatedDate <= timeEntry.CreatedDate) {
+          timeEntriesToDelete.add(timeEntriesProcessedMap.get(key));
+          timeEntriesProcessedMap.put(key, timeEntry);
+        } else {
+          timeEntriesToDelete.add(timeEntry);
+        }
+      }
+    }
+
+    Logger.info('Kept time entries', timeEntriesProcessedMap.values());
+    Database.DeleteResult[] timeEntryDeleteResults = Database.delete(timeEntriesToDelete, true, AccessLevel.SYSTEM_MODE);
+    Logger.info('Delete time entry records', timeEntryDeleteResults);
     Logger.saveLog();
   }
 
