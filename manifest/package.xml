@@ -3,6 +3,7 @@
 	<types>
 		<members>flair__Absence_Day__c.Migration_ID__c</members>
 		<members>flair__Entity__c.Is_MSBC_Synched__c</members>
+		<members>flair__Time_Entry__c.To_Delete__c</members>
 		<name>CustomField</name>
 	</types>
 	<version>62.0</version>
