@@ -1,16 +1,46 @@
-public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Batchable<sObject> , Database.Stateful , Database.AllowsCallouts , Schedulable {
-    Integer numberOfAbsences = 0;
-    private String originalTransactionId;
-    String query = 'SELECT (SELECT Id, Migration_ID__c, flair__Day__c, flair__Workload_Amount_in_Minutes__c FROM flair__Absence_Days__r WHERE flair__Workload_Amount_in_Minutes__c  > 0), flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Employee_Name__c, flair__EmployeeId__c FROM flair__Absence__c WHERE flair__Approval_Status__c  = \'APPROVED\'';
+public with sharing class AbsenceTriggerHandler {
+    public AbsenceTriggerHandler() {}
 
-    public Database.QueryLocator start(Database.BatchableContext bc){
-        this.originalTransactionId = Logger.getTransactionId();
-        Logger.info('Starting EmployeeAbsences_ScheduleBatch');
-        Logger.saveLog();
-        return Database.getQueryLocator(query);
+    public void onBeforeDelete(Map<Id, flair__Absence__c> oldAbsences) {
+        deleteRelatedEmployeeAbsencesInMSBC(oldAbsences.keySet());
     }
 
-    public void execute(Database.BatchableContext bc, List<flair__Absence__c> scope){
+    public void onAfterUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
+        deleteRelatedEmployeeAbsencesInMSBC(oldAbsences.keySet());
+        createRelatedEmployeeAbsencesInMSBC(newAbsences.keySet());
+    }
+
+    @future(callout=true)
+    public static void deleteRelatedEmployeeAbsencesInMSBC(Set<Id> oldAbsencesIds) {
+        flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Absence__r.flair__EmployeeId__c FROM flair__Absence_Day__c WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsencesIds];
+        
+        Id[] employeeIds = new List<Id>();
+        for(flair__Absence_Day__c absenceDay : absenceDays){
+            employeeIds.add(absenceDay.flair__Absence__r.flair__EmployeeId__c);
+        }
+
+        flair__Employee__c[] employees = [SELECT flair__Entity__r.flair__Migration_ID__c  FROM flair__Employee__c WHERE Id IN :employeeIds];
+        DeleteEmployeeAbsencesRequestParams[] deleteEmployeeList = new List<DeleteEmployeeAbsencesRequestParams>();
+        for (flair__Employee__c employee : employees) {
+            for (flair__Absence_Day__c absenceDay : absenceDays) {
+                DeleteEmployeeAbsencesRequestParams params = new DeleteEmployeeAbsencesRequestParams();
+                params.companyId = employee.flair__Entity__r.flair__Migration_ID__c;
+                params.absenceDayId = absenceDay.Migration_ID__c;
+                deleteEmployeeList.add(params);}
+        }
+        Logger.info('DeleteEmployeeAbsencesRequestParams records').setMessage(JSON.serialize(deleteEmployeeList));
+
+        for(DeleteEmployeeAbsencesRequestParams params : deleteEmployeeList){
+            MSBCAPI.deleteEmployeeAbsences(params.companyId, params.absenceDayId);
+        }
+    }
+
+    @future(callout=true)
+    public static void createRelatedEmployeeAbsencesInMSBC(Set<Id> newAbsencesIds) {
+        flair__Absence__c[] scope = [SELECT (SELECT Id, Migration_ID__c, flair__Day__c, flair__Workload_Amount_in_Minutes__c FROM flair__Absence_Days__r 
+            WHERE flair__Workload_Amount_in_Minutes__c  > 0), flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Employee_Name__c, flair__EmployeeId__c 
+            FROM flair__Absence__c WHERE flair__Approval_Status__c  = 'APPROVED' AND Id IN :newAbsencesIds];  
+
         Id[] employeeIds = new List<Id>();
         for(flair__Absence__c absence : scope){
             employeeIds.add(absence.flair__EmployeeId__c);
@@ -58,35 +88,16 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
         Database.SaveResult[] results = Database.update(absenceDaysToUpdate, true, AccessLevel.SYSTEM_MODE);
         Logger.info('flair__Absence_Day__c records updated', results);
         Logger.saveLog();
-        numberOfAbsences += scope.size();
-    }
-   
-    public void finish(Database.BatchableContext bc){
-        Logger.info('Number of Absences processed: ' + numberOfAbsences);
-        Logger.setParentLogTransactionId(this.originalTransactionId);
-        Logger.info('Finishing running TimeEntries_ScheduleBatch');
-        Logger.saveLog();
-    }
-
-    public void execute(SchedulableContext sc) {
-        Database.executeBatch(new EmployeeAbsences_ScheduleBatch());
-    }
-
-    public static void start(Integer hour){
-        String jobName = 'EmployeeAbsences_ScheduleBatch';
-        if (hour == 0) 
-            Database.executebatch(new EmployeeAbsences_ScheduleBatch());
-        else {
-            jobName += ' - ' + Datetime.now().format();
-            String cron = '0 0 ' + String.valueof(hour) + ' * * ?';
-            Logger.info('Scheduling EmployeeAbsences_ScheduleBatch with cron: ' + cron);
-            System.schedule(jobName, cron, new EmployeeAbsences_ScheduleBatch());
-        }
     }
 
     public class CreateEmployeeRequestParams {
         public String companyId { get; set; }
         public String absenceDayId { get; set; }
         public MSBCAPI.CreateEmployeeAbsencesRequest data { get; set; }
+    }
+
+    public class DeleteEmployeeAbsencesRequestParams {
+        public String companyId { get; set; }
+        public String absenceDayId { get; set; }
     }
 }

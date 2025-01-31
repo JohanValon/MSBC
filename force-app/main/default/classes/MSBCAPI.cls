@@ -27,28 +27,27 @@ public with sharing class MSBCAPI {
       } else {
         Logger.error('An error occured while calling the API').setMessage(String.valueOf(response.getStatusCode())).setMessage(response.getStatus()).setMessage(response.getBody());
         retryCount++;
-        if (retryCount < MAX_RETRIES) {
+        
+        // if( new List<Integer>{400, 401, 403, 404}.contains(response.getStatusCode())){
+        //   Logger.error('No retry sever error. Callout failed.');
+        //   CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
+        //   throw new CalloutException(response.getBody());
+        // } else {
+          if (retryCount < MAX_RETRIES) {
             // Schedule the retry after the delay time
             Logger.info('Number of Retries : ' + retryCount);
             CalloutRetryHandler.scheduleRetry(requestEndpoint, requestMethod, body);
-        } else {
-          Logger.info('Max retries reached. Callout failed.');
-          CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
-        }
+          } else {
+            Logger.error('Max retries reached. Callout failed.');
+            CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
+            throw new CalloutException(response.getBody());
+          }
+        // }
       }
     } catch (Exception ex) {
       Logger.error('An error while calling the API').setMessage(ex.getMessage());
-      retryCount++;
-      if (retryCount < MAX_RETRIES) {
-          // Schedule the retry after the delay time
-          Logger.info('Number of Retries : ' + retryCount);
-          CalloutRetryHandler.scheduleRetry(requestEndpoint, requestMethod, body);
-      } else {
-          Logger.info('Max retries reached. Callout failed.');
-          CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
-      }
     }
-    return null;
+    return '';
   }
 
   public class ErrorResponse {
@@ -74,9 +73,10 @@ public with sharing class MSBCAPI {
   }
 
   public static PostedZDEHeaders getHeaders( String companyId ) {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'AF\''; // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\'+'+ // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
     // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).addDays(-1).format('yyyy-MM-dd');
-    //'$filter=modifiedAt+ge+'+System.now().addDays(-7).format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'')+'and+date+ge'+System.now().addMonths(-2).toStartOfMonth().format('yyyy-MM-dd');
+    'and+modifiedAt+ge+2024-06-13T08:04:15.517Z+'+'and+date+ge+2024-01-10';
+    // 'and+modifiedAt+ge+'+System.now().addDays(-7).format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'')+'and+date+ge'+ DateTime.newInstance(System.today().addMonths(-2).toStartOfMonth(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
     requestEndpoint = requestEndpoint.replace(' ', '+');
     retryCount = 0;
     return parseGetHeaders(callApi(requestEndpoint, 'GET', null));
@@ -108,7 +108,7 @@ public with sharing class MSBCAPI {
     return parseGetAvailableCompanies(callApi(requestEndpoint, 'GET', null));
   }
 
-  public static CreateEmployeeResponse createEmployeeAbscence( String companyId, CreateEmployeeRequest requestBody ) {
+  public static CreateEmployeeAbsencesResponse createEmployeeAbscence( String companyId, CreateEmployeeAbsencesRequest requestBody ) {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + CompanyId + ')/employeeAbsences';
     retryCount = 0;
     return parseCreateEmployeeAbscence(callApi(requestEndpoint, 'POST', JSON.serialize(requestBody)));
@@ -118,6 +118,12 @@ public with sharing class MSBCAPI {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employeeAbsences?$top=100';
     retryCount = 0;
     return parseGetEmployeeAbsences(callApi(requestEndpoint, 'GET', null));
+  }
+
+  public static void deleteEmployeeAbsences(String companyId, String absenceId) {
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employeeAbsences(' + absenceId + ')';
+    retryCount = 0;
+    callApi(requestEndpoint, 'DELETE', null);
   }
 
   private static PostedZDEHeaders parseGetHeaders( String response ) {
@@ -162,12 +168,12 @@ public with sharing class MSBCAPI {
       Companies.class);
   }
 
-  private static CreateEmployeeResponse parseCreateEmployeeAbscence( String response ) {
+  private static CreateEmployeeAbsencesResponse parseCreateEmployeeAbscence( String response ) {
     response = response.replace('"@odata.context":', '"odataContext":');
     response = response.replace('"@odata.etag":', '"odataEtag":');
-    return (CreateEmployeeResponse) JSON.deserialize(
+    return (CreateEmployeeAbsencesResponse) JSON.deserialize(
       response,
-      CreateEmployeeResponse.class);
+      CreateEmployeeAbsencesResponse.class);
   }
 
   private static EmployeeAbsences parseGetEmployeeAbsences( String response ) {
@@ -273,7 +279,7 @@ public with sharing class MSBCAPI {
     public String systemModifiedBy { get; set; }
   }
 
-  public class CreateEmployeeRequest {
+  public class CreateEmployeeAbsencesRequest {
     public String employeeNo { get; set; }
     public String resourceNo { get; set; }
     public String fromDate { get; set; }
@@ -281,7 +287,7 @@ public with sharing class MSBCAPI {
     public Decimal quantityBase { get; set; }
   }
 
-  public class CreateEmployeeResponse {
+  public class CreateEmployeeAbsencesResponse {
     public String odataContext { get; set; }
     public String odataEtag { get; set; }
     public String id { get; set; }

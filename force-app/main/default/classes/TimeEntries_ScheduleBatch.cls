@@ -62,17 +62,19 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
         timeEntriesProcessedMap.put(key, timeEntry);
       } else {
         if(timeEntriesProcessedMap.get(key).CreatedDate <= timeEntry.CreatedDate) {
+          timeEntriesProcessedMap.get(key).To_Delete__c = true;
           timeEntriesToDelete.add(timeEntriesProcessedMap.get(key));
           timeEntriesProcessedMap.put(key, timeEntry);
         } else {
+          timeEntry.To_Delete__c = true;
           timeEntriesToDelete.add(timeEntry);
         }
       }
     }
 
     Logger.info('Kept time entries', timeEntriesProcessedMap.values());
-    Database.DeleteResult[] timeEntryDeleteResults = Database.delete(timeEntriesToDelete, true, AccessLevel.SYSTEM_MODE);
-    Logger.info('Delete time entry records', timeEntryDeleteResults);
+    Database.SaveResult[] timeEntryDeleteResults = Database.update(timeEntriesToDelete, true, AccessLevel.SYSTEM_MODE);
+    Logger.info('Time entry records Marked to delete', timeEntryDeleteResults);
     Logger.saveLog();
   }
 
