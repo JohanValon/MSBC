@@ -51,8 +51,10 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
         flair__Absence_Day__c[] absenceDaysToUpdate = new List<flair__Absence_Day__c>();
         for(flair__Absence__c absence : scope){ 
             for(flair__Absence_Day__c absenceDay : absence.flair__Absence_Days__r){ 
-                absenceDay.Migration_ID__c = absenceDayIdToMigrationId.get(absenceDay.Id);
-                absenceDaysToUpdate.add(absenceDay);
+                if (String.isBlank(absenceDay.Migration_ID__c)) {
+                    absenceDay.Migration_ID__c = absenceDayIdToMigrationId.get(absenceDay.Id);
+                    absenceDaysToUpdate.add(absenceDay);
+                }
             }
         }
         Database.SaveResult[] results = Database.update(absenceDaysToUpdate, true, AccessLevel.SYSTEM_MODE);

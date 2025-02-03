@@ -39,7 +39,7 @@ public with sharing class CalloutRetryHandler implements Schedulable {
     this.body = body;
   }
 
-  public static void sendNotificationEmail(String requestEndpoint, String requestMethod, String body) {
+  public static void sendNotificationEmail(String requestEndpoint, String requestMethod, String body, String cause) {
     Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
     mail.setToAddresses(integrationUserEmails);
     mail.setSubject('An error occur when accessing MSBC API');     
@@ -48,6 +48,7 @@ public with sharing class CalloutRetryHandler implements Schedulable {
       '<p>' + 'Please check the logs in Nebula Logger ' + '</p>' + 
       '<p>' + 'The request method is: ' + requestMethod + '</p>' +  
       '<p>' + 'The request body is: ' + body + '</p>' +
+      '<p>' + 'Cause: ' + cause + '</p>' +
       '</body></html>'; 
     mail.setHtmlBody(emailBody);
     Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });  

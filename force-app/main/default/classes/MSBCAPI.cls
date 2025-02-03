@@ -28,21 +28,21 @@ public with sharing class MSBCAPI {
         Logger.error('An error occured while calling the API').setMessage(String.valueOf(response.getStatusCode())).setMessage(response.getStatus()).setMessage(response.getBody());
         retryCount++;
         
-        // if( new List<Integer>{400, 401, 403, 404}.contains(response.getStatusCode())){
-        //   Logger.error('No retry sever error. Callout failed.');
-        //   CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
-        //   throw new CalloutException(response.getBody());
-        // } else {
+         if( new List<Integer>{400, 401, 403, 404}.contains(response.getStatusCode())){
+           Logger.error('No retry sever error. Callout failed.');
+           CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
+           throw new CalloutException(response.getBody());
+         } else {
           if (retryCount < MAX_RETRIES) {
             // Schedule the retry after the delay time
             Logger.info('Number of Retries : ' + retryCount);
             CalloutRetryHandler.scheduleRetry(requestEndpoint, requestMethod, body);
           } else {
             Logger.error('Max retries reached. Callout failed.');
-            CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body);
+            CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
             throw new CalloutException(response.getBody());
           }
-        // }
+         }
       }
     } catch (Exception ex) {
       Logger.error('An error while calling the API').setMessage(ex.getMessage());
