@@ -2,52 +2,54 @@ public with sharing class MSBCAPI {
 
   public static final String API_ENDPOINT = 'callout:Named_Cred_01/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/';
   public static final String ENVIRONMENT = MSBC_API_Configuration__mdt.getInstance('Dev').Environment__c;
-  private static final Integer MAX_RETRIES = (Integer) MSBC_API_Configuration__mdt.getInstance('Dev').Max_Retries__c;
+  private static final Integer MAX_RETRIES = 3;//(Integer) MSBC_API_Configuration__mdt.getInstance('Dev').Max_Retries__c;
   private static Integer retryCount = 0;
 
-  public static String callApi(
+  public static HttpResponse callApi(
     String requestEndpoint,
     String requestMethod,
     String body
   ) {
-    try {
-      Http http = new Http();
-      HttpRequest request = new HttpRequest();
-      request.setEndpoint(requestEndpoint);
-      request.setMethod(requestMethod);
+    CalloutRetryHandlerQueueable callout = new CalloutRetryHandlerQueueable(requestEndpoint, requestMethod, body);
+    System.enqueueJob(callout);
+    // try {
+      // Http http = new Http();
+      // HttpRequest request = new HttpRequest();
+      // request.setEndpoint(requestEndpoint);
+      // request.setMethod(requestMethod);
       
-      if (body != null) {
-        request.setBody(body);
-        request.setHeader('Content-Type', 'application/json');
-      }
-      HttpResponse response = http.send(request);
-      if (String.valueOf(response.getStatusCode()).startsWith('20')) {
-        Logger.info('Callout succeeded: ' + response.getStatusCode());
-        return response.getBody();
-      } else {
-        Logger.error('An error occured while calling the API').setMessage(String.valueOf(response.getStatusCode())).setMessage(response.getStatus()).setMessage(response.getBody());
-        retryCount++;
+      // if (body != null) {
+      //   request.setBody(body);
+      //   request.setHeader('Content-Type', 'application/json');
+      // }
+      // HttpResponse response = http.send(request);
+      // if (String.valueOf(response.getStatusCode()).startsWith('20')) {
+      //   Logger.info('Callout succeeded: ' + response.getStatusCode());
+      //   return response;
+      // } else {
+      //   Logger.error('An error occured while calling the API').setMessage(String.valueOf(response.getStatusCode())).setMessage(response.getStatus()).setMessage(response.getBody());
+      //   retryCount++;
         
-         if( new List<Integer>{400, 401, 403, 404}.contains(response.getStatusCode())){
-           Logger.error('No retry sever error. Callout failed.');
-           CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
-           throw new CalloutException(response.getBody());
-         } else {
-          if (retryCount < MAX_RETRIES) {
-            // Schedule the retry after the delay time
-            Logger.info('Number of Retries : ' + retryCount);
-            CalloutRetryHandler.scheduleRetry(requestEndpoint, requestMethod, body);
-          } else {
-            Logger.error('Max retries reached. Callout failed.');
-            CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
-            throw new CalloutException(response.getBody());
-          }
-         }
-      }
-    } catch (Exception ex) {
-      Logger.error('An error while calling the API').setMessage(ex.getMessage());
-    }
-    return '';
+      //    if( new List<Integer>{400, 401, 403, 404}.contains(response.getStatusCode())){
+      //      Logger.error('No retry sever error. Callout failed.');
+      //      CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
+      //      throw new CalloutException(response.getBody());
+      //    } else {
+      //     if (retryCount < MAX_RETRIES) {
+      //       // Schedule the retry after the delay time
+      //       Logger.info('Number of Retries : ' + retryCount);
+      //       CalloutRetryHandler.scheduleRetry(requestEndpoint, requestMethod, body);
+      //     } else {
+      //       Logger.error('Max retries reached. Callout failed.');
+      //       CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
+      //       throw new CalloutException(response.getBody());
+      //     }
+      //    }
+      // }
+    // } catch (Exception ex) {
+    //   Logger.error('An error while calling the API').setMessage(ex.getMessage());
+    // }
+    // return new HttpResponse();
   }
 
   public class ErrorResponse {
@@ -79,45 +81,45 @@ public with sharing class MSBCAPI {
     // 'and+modifiedAt+ge+'+System.now().addDays(-7).format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'')+'and+date+ge'+ DateTime.newInstance(System.today().addMonths(-2).toStartOfMonth(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
     requestEndpoint = requestEndpoint.replace(' ', '+');
     retryCount = 0;
-    return parseGetHeaders(callApi(requestEndpoint, 'GET', null));
+    return parseGetHeaders(callApi(requestEndpoint, 'GET', null).getBody());
   }
 
   public static CausesOfAbsences getCausesOfAbsence(String companyId) {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/causesOfAbsence';
     retryCount = 0;
-    return parseGetCausesOfAbsence(callApi(requestEndpoint, 'GET', null));
+    return parseGetCausesOfAbsence(callApi(requestEndpoint, 'GET', null).getBody());
   }
 
   public static EmployeesFlair getEmployeesFlair(String companyId) {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employees?$filter=status eq \'Active\'';
     requestEndpoint = requestEndpoint.replace(' ', '+');
     retryCount = 0;
-    return parseGetEmployeesFlair(callApi(requestEndpoint, 'GET', null));
+    return parseGetEmployeesFlair(callApi(requestEndpoint, 'GET', null).getBody());
   }
 
   public static EmployeesStandard getEmployeesStandard(String companyId) {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employees';
     retryCount = 0;
-    return parseGetEmployeesStandard(callApi(requestEndpoint, 'GET', null));
+    return parseGetEmployeesStandard(callApi(requestEndpoint, 'GET', null).getBody());
   }
 
   public static Companies getAvailableCompanies() {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies'; // $filter=resNo eq 'APU' and date gt 2024-01-01&$skip=100
     requestEndpoint = requestEndpoint.replace(' ', '+');
     retryCount = 0;
-    return parseGetAvailableCompanies(callApi(requestEndpoint, 'GET', null));
+    return parseGetAvailableCompanies(callApi(requestEndpoint, 'GET', null).getBody());
   }
 
   public static CreateEmployeeAbsencesResponse createEmployeeAbscence( String companyId, CreateEmployeeAbsencesRequest requestBody ) {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + CompanyId + ')/employeeAbsences';
     retryCount = 0;
-    return parseCreateEmployeeAbscence(callApi(requestEndpoint, 'POST', JSON.serialize(requestBody)));
+    return parseCreateEmployeeAbscence(callApi(requestEndpoint, 'POST', JSON.serialize(requestBody)).getBody());
   }
 
   public static EmployeeAbsences getEmployeeAbsences(String companyId) {
     String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employeeAbsences?$top=100';
     retryCount = 0;
-    return parseGetEmployeeAbsences(callApi(requestEndpoint, 'GET', null));
+    return parseGetEmployeeAbsences(callApi(requestEndpoint, 'GET', null).getBody());
   }
 
   public static void deleteEmployeeAbsences(String companyId, String absenceId) {
