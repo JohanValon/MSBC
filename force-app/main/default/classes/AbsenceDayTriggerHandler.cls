@@ -10,11 +10,13 @@ public with sharing class AbsenceDayTriggerHandler {
     for(flair__Absence_Day__c absenceDay : newAbsenceDays.values()) {
       newAbsenceIds.add(absenceDay.Id);
     }
-    // AbsenceTriggerHandler.deleteRelatedEmployeeAbsencesInMSBC(oldAbsenceIds);
-    // AbsenceTriggerHandler.createRelatedEmployeeAbsencesInMSBC(newAbsenceIds);
-		ChainManager.instance
-    .add(new FutureLink_deleteEmployeeAbsencesInMSBC(oldAbsenceIds))
-    .add(new FutureLink_createEmployeeAbsencesInMSBC(newAbsenceIds))
-    .startChain();
+
+    if(!System.isBatch()) {
+      ChainManager.instance
+      .add(new AbsenceTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(oldAbsenceIds))
+      .add(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(newAbsenceIds))
+      .startChain();
+    }
+
   }
 }
