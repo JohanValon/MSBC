@@ -1,0 +1,40 @@
+{
+    "@odata.context": "https://api.businesscentral.dynamics.com/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/dev_kuma_20240913/api/kvs/flair/v1.0/$metadata#companies(5c7105db-3494-ee11-8178-000d3aea3877)/causesOfAbsence",
+    "value": [
+
+        {
+            "@odata.etag": "W/\"JzIwOzE3Mjc0OTIzMzAxNjcyMjg0MDkwMTswMDsn\"",
+            "id": "ae06daab-1698-ee11-be36-6045bd187c57",
+            "code": "BREAK",
+            "description": "Break"
+        },
+
+        {
+            "@odata.etag": "W/\"JzE5Ozk0ODQ1MDA5NTU2ODc3NzU4OTYxOzAwOyc=\"",
+            "id": "af06daab-1698-ee11-be36-6045bd187c57",
+            "code": "COMP",
+            "description": "Compensation time for offshore work and work on weekends and public holidays"
+        },
+
+        {
+            "@odata.etag": "W/\"JzE5OzQzNzU2MDkzNjI3MTA3Njg1NjExOzAwOyc=\"",
+            "id": "b006daab-1698-ee11-be36-6045bd187c57",
+            "code": "PUBLIC HOL",
+            "description": "Public Holidays"
+        },
+
+        {
+            "@odata.etag": "W/\"JzE5OzU1Njc1MDA0NzA2NDkzOTIzMDYxOzAwOyc=\"",
+            "id": "b106daab-1698-ee11-be36-6045bd187c57",
+            "code": "SICK",
+            "description": "Sick leave"
+        },
+
+        {
+            "@odata.etag": "W/\"JzE5OzU0MTUwNzY2OTkyMTAzOTUzMDAxOzAwOyc=\"",
+            "id": "b206daab-1698-ee11-be36-6045bd187c57",
+            "code": "VACATION",
+            "description": "Vacation"
+        }
+    ]
+}

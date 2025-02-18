@@ -43,6 +43,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
         timeEntry.flair__Migration_ID__c = header.id;
         timeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
         timeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
+        timeEntry.odata_etag__c = header.odataEtag;
         timeEntry.flair__Approval_Status__c = 'PENDING';
         timeEntries.add(timeEntry);
         breakTimesByHeaderIds.put(header.id, header.breakTime);
@@ -102,7 +103,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
   }
 
   public static void start(){
-    String jobName = 'EmployeeAbsences_ScheduleBatch' + ' - ' + Datetime.now().format();
+    String jobName = 'TimeEntries_ScheduleBatch' + ' - ' + Datetime.now().format();
     String cron = '0 0 1 ? * *'; //Every day at 1:AM hour
 		Logger.info('Scheduling TimeEntries_ScheduleBatch with cron: ' + cron);
     System.schedule(jobName, cron, new EmployeeAbsences_ScheduleBatch());

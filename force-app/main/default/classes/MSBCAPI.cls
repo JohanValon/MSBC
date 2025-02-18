@@ -48,11 +48,6 @@ public with sharing class MSBCAPI {
     throw new CalloutException('An MSBCAPI Callout failed');
   }
 
-  public class ErrorResponse {
-    public String code { get; set; }
-    public String message { get; set; }
-  }
-
   public static void setupAPI() {
     // Call the API to get the available companies
     Companies companies = getAvailableCompanies();
@@ -71,10 +66,8 @@ public with sharing class MSBCAPI {
   }
 
   public static PostedZDEHeaders getHeaders( String companyId ) {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$top=5&$filter=resNo+eq+\'APU\'+'+ // and date gt 2024-01-01&$skip=100 // DateTime.newInstance( System.Today(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd') //top=100
-    // String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter=date+eq+'+ DateTime.newInstance(System.Today(), Time.newInstance(0,0,0,0)).addDays(-1).format('yyyy-MM-dd');
-    'and+modifiedAt+ge+2024-06-13T08:04:15.517Z+'+'and+date+ge+2024-01-10';
-    // 'and+modifiedAt+ge+'+System.now().addDays(-7).format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'')+'and+date+ge'+ DateTime.newInstance(System.today().addMonths(-2).toStartOfMonth(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/postedZdeHeaders?$filter='+
+    'modifiedAt+ge+'+System.now().addDays(-7).format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'')+'+and+date+ge+'+ DateTime.newInstance(System.today().addMonths(-2).toStartOfMonth(), Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetHeaders(new MSBCAPI().callApi(requestEndpoint, 'GET', null));
   }
@@ -176,142 +169,142 @@ public with sharing class MSBCAPI {
   }
 
   public class PostedZDEHeaders {
-    public String odataContext { get; set; }
-    public List<Header> value { get; set; }
+    public String odataContext;
+    public List<Header> value;
   }
 
   public class Header {
-    public String odataEtag { get; set; }
-    public String id { get; set; }
-    public String xdate { get; set; }
-    public String resNo { get; set; }
-    public String fromTime { get; set; }
-    public String toTime { get; set; }
-    public Decimal breakTime { get; set; }
-    public Decimal quantity { get; set; }
-    public String employeeNo { get; set; }
+    public String odataEtag;
+    public String id;
+    public String xdate;
+    public String resNo;
+    public String fromTime;
+    public String toTime;
+    public Decimal breakTime;
+    public Decimal quantity;
+    public String employeeNo;
   }
 
   public class CausesOfAbsences {
-    public String odataContext { get; set; }
-    public List<AbsenceCause> value { get; set; }
+    public String odataContext;
+    public List<AbsenceCause> value;
   }
 
   public class AbsenceCause {
-    public String odataEtag { get; set; }
-    public String id { get; set; }
-    public String code { get; set; }
-    public String description { get; set; }
+    public String odataEtag;
+    public String id;
+    public String code;
+    public String description;
   }  
 
   public class EmployeesFlair {
-    public String odataContext { get; set; }
-    public List<EmployeeFlair> value { get; set; }
+    public String odataContext;
+    public List<EmployeeFlair> value;
   }
 
   public class EmployeeFlair {
-    public String odataEtag { get; set; }
-    public String systemId { get; set; }
-    public String no { get; set; }
-    public String firstName { get; set; }
-    public String middleName { get; set; }
-    public String lastName { get; set; }
-    public String resourceNo { get; set; }
-    public String status { get; set; }
+    public String odataEtag;
+    public String systemId;
+    public String no;
+    public String firstName;
+    public String middleName;
+    public String lastName;
+    public String resourceNo;
+    public String status;
   }
 
   public class EmployeesStandard {
-    public String odataContext { get; set; }
-    public List<EmployeeStandard> value { get; set; }
+    public String odataContext;
+    public List<EmployeeStandard> value;
   }
 
   public class EmployeeStandard {
-    public String odataEtag { get; set; }
-    public String id { get; set; }
-    public String xnumber { get; set; }
-    public String displayName { get; set; }
-    public String givenName { get; set; }
-    public String middleName { get; set; }
-    public String surname { get; set; }
-    public String jobTitle { get; set; }
-    public String addressLine1 { get; set; }
-    public String addressLine2 { get; set; }
-    public String city { get; set; }
-    public String state { get; set; }
-    public String country { get; set; }
-    public String postalCode { get; set; }
-    public String phoneNumber { get; set; }
-    public String mobilePhone { get; set; }
-    public String email { get; set; }
-    public String personalEmail { get; set; }
-    public String employmentDate { get; set; }
-    public String terminationDate { get; set; }
-    public String status { get; set; }
-    public String birthDate { get; set; }
-    public String statisticsGroupCode { get; set; }
-    public String lastModifiedDateTime { get; set; }
+    public String odataEtag;
+    public String id;
+    public String xnumber;
+    public String displayName;
+    public String givenName;
+    public String middleName;
+    public String surname;
+    public String jobTitle;
+    public String addressLine1;
+    public String addressLine2;
+    public String city;
+    public String state;
+    public String country;
+    public String postalCode;
+    public String phoneNumber;
+    public String mobilePhone;
+    public String email;
+    public String personalEmail;
+    public String employmentDate;
+    public String terminationDate;
+    public String status;
+    public String birthDate;
+    public String statisticsGroupCode;
+    public String lastModifiedDateTime;
   }
 
   public class Companies {
-    public String odataContext { get; set; }
-    public List<Company> value { get; set; }
+    public String odataContext;
+    public List<Company> value;
   }
 
   public class Company {
-    public String id { get; set; }
-    public String systemVersion { get; set; }
-    public Integer timestamp { get; set; }
-    public String name { get; set; }
-    public String displayName { get; set; }
-    public String businessProfileId { get; set; }
-    public String systemCreatedAt { get; set; }
-    public String systemCreatedBy { get; set; }
-    public String systemModifiedAt { get; set; }
-    public String systemModifiedBy { get; set; }
+    public String id;
+    public String systemVersion;
+    public Integer timestamp;
+    public String name;
+    public String displayName;
+    public String businessProfileId;
+    public String systemCreatedAt;
+    public String systemCreatedBy;
+    public String systemModifiedAt;
+    public String systemModifiedBy;
   }
 
   public class CreateEmployeeAbsencesRequest {
-    public String employeeNo { get; set; }
-    public String resourceNo { get; set; }
-    public String fromDate { get; set; }
-    public String causeOfAbsenceCode { get; set; }
-    public Decimal quantityBase { get; set; }
+    public String employeeNo;
+    public String resourceNo;
+    public String fromDate;
+    public String causeOfAbsenceCode;
+    public Decimal quantityBase;
   }
 
   public class CreateEmployeeAbsencesResponse {
-    public String odataContext { get; set; }
-    public String odataEtag { get; set; }
-    public String id { get; set; }
-    public String employeeNo { get; set; }
-    public String resourceNo { get; set; }
-    public String fromDate { get; set; }
-    public String causeOfAbsenceCode { get; set; }
-    public Decimal quantityBase { get; set; }
+    public String odataContext;
+    public String odataEtag;
+    public String id;
+    public String employeeNo;
+    public String resourceNo;
+    public String fromDate;
+    public String causeOfAbsenceCode;
+    public Decimal quantityBase;
   }
 
   public class EmployeeAbsences {
-    public String odataContext { get; set; }
-    public List<EmployeeAbsence> value { get; set; }
+    public String odataContext;
+    public List<EmployeeAbsence> value;
   }
 
   public class EmployeeAbsence {
-    public String odataEtag { get; set; }
-    public String id { get; set; }
-    public String employeeNo { get; set; }
-    public String resourceNo { get; set; }
-    public String fromDate { get; set; }
-    public String causeOfAbsenceCode { get; set; }
-    public Decimal quantityBase { get; set; }
+    public String odataEtag;
+    public String id;
+    public String employeeNo;
+    public String resourceNo;
+    public String fromDate;
+    public String causeOfAbsenceCode;
+    public Decimal quantityBase;
   }
 
   public class CreateEmployeeRequestParams {
-    public String companyId { get; set; }
-    public String absenceDayId { get; set; }
-    public MSBCAPI.CreateEmployeeAbsencesRequest data { get; set; }
+    public String companyId;
+    public String absenceDayId;
+    public MSBCAPI.CreateEmployeeAbsencesRequest data;
   }
 
   public class DeleteEmployeeAbsencesRequestParams {
-    public String companyId { get; set; }
-    public String absenceDayId { get; set; }
+    public String companyId;
+    public String absenceDayId;
   }
 }

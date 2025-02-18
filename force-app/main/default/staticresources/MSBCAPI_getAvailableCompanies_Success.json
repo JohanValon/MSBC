@@ -1,0 +1,96 @@
+{
+    "@odata.context": "https://api.businesscentral.dynamics.com/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/dev_kuma_20240913/api/kvs/flair/v1.0/$metadata#companies",
+    "value": [
+
+        {
+            "id": "5c7105db-3494-ee11-8178-000d3aea3877",
+            "systemVersion": "25.2.27733.27900",
+            "timestamp": 59495599,
+            "name": "Con4Mare GmbH & Cie. KG",
+            "displayName": "Con4Mare GmbH & Cie. KG",
+            "businessProfileId": "",
+            "systemCreatedAt": "2023-12-06T12:42:12.933Z",
+            "systemCreatedBy": "1a86e7ba-04e5-4595-b3a7-b3a2cab9caed",
+            "systemModifiedAt": "2023-12-06T12:42:12.933Z",
+            "systemModifiedBy": "1a86e7ba-04e5-4595-b3a7-b3a2cab9caed"
+        },
+
+        {
+            "id": "038f8aec-efed-ea11-916d-905a013ab5d6",
+            "systemVersion": "25.2.27733.27900",
+            "timestamp": 2531512,
+            "name": "Einrichtung",
+            "displayName": "BackUp Einrichtung Searenergy ",
+            "businessProfileId": "",
+            "systemCreatedAt": "0001-01-01T00:00:00Z",
+            "systemCreatedBy": "00000000-0000-0000-0000-000000000000",
+            "systemModifiedAt": "0001-01-01T00:00:00Z",
+            "systemModifiedBy": "00000000-0000-0000-0000-000000000000"
+        },
+
+        {
+            "id": "d294fc32-3494-ee11-8178-000d3aea3877",
+            "systemVersion": "25.2.27733.27900",
+            "timestamp": 59352138,
+            "name": "Elbe 1 GmbH",
+            "displayName": "Elbe 1 GmbH",
+            "businessProfileId": "",
+            "systemCreatedAt": "2023-12-06T12:37:26.513Z",
+            "systemCreatedBy": "1a86e7ba-04e5-4595-b3a7-b3a2cab9caed",
+            "systemModifiedAt": "2023-12-06T12:37:26.513Z",
+            "systemModifiedBy": "1a86e7ba-04e5-4595-b3a7-b3a2cab9caed"
+        },
+
+        {
+            "id": "4bd695eb-ff3a-eb11-bf6b-e85814d21d48",
+            "systemVersion": "25.2.27733.27900",
+            "timestamp": 50141162,
+            "name": "Init",
+            "displayName": "SeaRenergy Offshore Holding GmbH",
+            "businessProfileId": "",
+            "systemCreatedAt": "0001-01-01T00:00:00Z",
+            "systemCreatedBy": "00000000-0000-0000-0000-000000000000",
+            "systemModifiedAt": "2023-09-04T13:15:59.953Z",
+            "systemModifiedBy": "1a86e7ba-04e5-4595-b3a7-b3a2cab9caed"
+        },
+
+        {
+            "id": "78c81ff5-bdb6-ed11-9a88-000d3a83e0fc",
+            "systemVersion": "25.2.27733.27900",
+            "timestamp": 45608299,
+            "name": "SeaRenergy Design GmbH",
+            "displayName": "Seartec GmbH",
+            "businessProfileId": "",
+            "systemCreatedAt": "2023-02-27T16:44:13.967Z",
+            "systemCreatedBy": "7c83e419-e337-4742-9574-450df16c33f0",
+            "systemModifiedAt": "2023-07-05T09:43:10.737Z",
+            "systemModifiedBy": "7c83e419-e337-4742-9574-450df16c33f0"
+        },
+
+        {
+            "id": "7c7d1590-a3d0-ed11-a7c9-002248d80158",
+            "systemVersion": "25.2.27733.27900",
+            "timestamp": 37796967,
+            "name": "SeaRenergy Engineering GmbH",
+            "displayName": "SeaRenergy Engineering GmbH",
+            "businessProfileId": "",
+            "systemCreatedAt": "2023-04-01T15:40:44.393Z",
+            "systemCreatedBy": "7c83e419-e337-4742-9574-450df16c33f0",
+            "systemModifiedAt": "2023-04-01T15:40:44.393Z",
+            "systemModifiedBy": "7c83e419-e337-4742-9574-450df16c33f0"
+        },
+
+        {
+            "id": "39d9b6bf-58a5-ed11-9a8a-002248e5d39a",
+            "systemVersion": "25.2.27733.27900",
+            "timestamp": 33912154,
+            "name": "SeaRenergy Services GmbH",
+            "displayName": "SeaRenergy Services GmbH",
+            "businessProfileId": "",
+            "systemCreatedAt": "2023-02-05T13:26:52.063Z",
+            "systemCreatedBy": "7c83e419-e337-4742-9574-450df16c33f0",
+            "systemModifiedAt": "2023-02-05T14:37:18.84Z",
+            "systemModifiedBy": "7c83e419-e337-4742-9574-450df16c33f0"
+        }
+    ]
+}

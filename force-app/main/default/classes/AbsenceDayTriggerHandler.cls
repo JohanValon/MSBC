@@ -13,10 +13,9 @@ public with sharing class AbsenceDayTriggerHandler {
 
     if(!System.isBatch()) {
       ChainManager.instance
-      .add(new AbsenceTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(oldAbsenceIds))
-      .add(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(newAbsenceIds))
+      .add(new AbsenceTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(oldAbsenceIds, oldAbsenceDays.keySet()))
+      .add(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(newAbsenceIds, oldAbsenceDays.keySet()))
       .startChain();
     }
-
   }
 }

@@ -6,25 +6,55 @@ public with sharing class AbsenceTriggerHandler {
     .add(new DeleteRelatedEmployeeAbsencesInMSBC(oldAbsences.keySet()))
     .startChain();
   }
-
-  public void onAfterUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
+    
+  public void onBeforeUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
+    Set<Id> oldAbsenceIds = new Set<Id>();
+    for(Id key : newAbsences.keySet()) {
+      if(oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c) {
+        oldAbsenceIds.add(key);
+      }
+    }
     ChainManager.instance
     .add(new DeleteRelatedEmployeeAbsencesInMSBC(oldAbsences.keySet()))
+    .startChain();
+  }
+
+  public void onAfterUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
+    Set<Id> newAbsenceIds = new Set<Id>();
+    for(Id key : newAbsences.keySet()) {
+      if(oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c) {
+        newAbsenceIds.add(key);
+      }
+    }
+    ChainManager.instance
     .add(new CreateRelatedEmployeeAbsencesInMSBC(newAbsences.keySet()))
     .startChain();
   }
 
-  public class DeleteRelatedEmployeeAbsencesInMSBC extends QueueLink {
-    Set<Id> oldAbsencesIds; 
+  public class DeleteRelatedEmployeeAbsencesInMSBC extends QueueLink implements Database.AllowsCallouts{
+    Set<Id> oldAbsencesIds;
+    Set<Id> absencesDaysIds = new Set<Id>();
 
     public DeleteRelatedEmployeeAbsencesInMSBC(Set<Id> oldAbsencesIds) {
       this.oldAbsencesIds = oldAbsencesIds;
     }
+      
+    public DeleteRelatedEmployeeAbsencesInMSBC(Set<Id> oldAbsencesIds, Set<Id> absencesDaysIds) {
+      this.oldAbsencesIds = oldAbsencesIds;
+      this.absencesDaysIds = absencesDaysIds;  
+    }
 
     protected override void job() {
-      flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Absence__r.flair__EmployeeId__c FROM flair__Absence_Day__c 
+      flair__Absence_Day__c[] absenceDays = new flair__Absence_Day__c[]{};
+      if(!absencesDaysIds.isEmpty()){
+			absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Absence__r.flair__EmployeeId__c FROM flair__Absence_Day__c 
+        WHERE Migration_ID__c != null AND Id IN :absencesDaysIds AND flair__Absence__c IN :oldAbsencesIds AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
+      } else {
+          absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Absence__r.flair__EmployeeId__c FROM flair__Absence_Day__c 
         WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsencesIds AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
-      
+      }
+      Logger.info('absenceDays records').setMessage(JSON.serialize(absenceDays));
+
       Id[] employeeIds = new List<Id>();
       for(flair__Absence_Day__c absenceDay : absenceDays){
         employeeIds.add(absenceDay.flair__Absence__r.flair__EmployeeId__c);
@@ -49,17 +79,31 @@ public with sharing class AbsenceTriggerHandler {
     }
   }
 
-  public class CreateRelatedEmployeeAbsencesInMSBC extends QueueLink {
+  public class CreateRelatedEmployeeAbsencesInMSBC extends QueueLink implements Database.AllowsCallouts {
     Set<Id> newAbsencesIds;
+    Set<Id> absencesDaysIds = new Set<Id>();
 
     public CreateRelatedEmployeeAbsencesInMSBC(Set<Id> newAbsencesIds) {
       this.newAbsencesIds = newAbsencesIds;
     }
+      
+    public CreateRelatedEmployeeAbsencesInMSBC(Set<Id> newAbsencesIds, Set<Id> absencesDaysIds) {
+      this.newAbsencesIds = newAbsencesIds;
+      this.absencesDaysIds = absencesDaysIds;  
+    }
 
     protected override void job() {
-      flair__Absence__c[] scope = [SELECT (SELECT Id, Migration_ID__c, flair__Day__c, flair__Workload_Amount_in_Minutes__c FROM flair__Absence_Days__r 
-        WHERE flair__Workload_Amount_in_Minutes__c > 0), flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Employee_Name__c, flair__EmployeeId__c 
-        FROM flair__Absence__c WHERE flair__Approval_Status__c = 'APPROVED' AND Id IN :newAbsencesIds]; 
+      flair__Absence__c[] scope = new flair__Absence__c[]{};
+      if(!absencesDaysIds.isEmpty()){
+			  scope = [SELECT (SELECT Id, Migration_ID__c, flair__Day__c, flair__Workload_Amount_in_Minutes__c FROM flair__Absence_Days__r 
+                          WHERE flair__Workload_Amount_in_Minutes__c > 0 AND Id IN :absencesDaysIds), flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Employee_Name__c, flair__EmployeeId__c 
+                FROM flair__Absence__c WHERE flair__Approval_Status__c = 'APPROVED' AND Id IN :newAbsencesIds]; 
+      } else {
+          scope = [SELECT (SELECT Id, Migration_ID__c, flair__Day__c, flair__Workload_Amount_in_Minutes__c FROM flair__Absence_Days__r 
+                            WHERE flair__Workload_Amount_in_Minutes__c > 0), flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Employee_Name__c, flair__EmployeeId__c 
+                  FROM flair__Absence__c WHERE flair__Approval_Status__c = 'APPROVED' AND Id IN :newAbsencesIds]; 
+      }
+      Logger.info('scope records').setMessage(JSON.serialize(scope));
 
       Id[] employeeIds = new List<Id>();
       for(flair__Absence__c absence : scope){
@@ -72,10 +116,10 @@ public with sharing class AbsenceTriggerHandler {
 
       for(flair__Absence__c absence : scope){ 
         for(flair__Absence_Day__c absenceDay : absence.flair__Absence_Days__r){ 
-          if (String.isBlank(absenceDay.Migration_ID__c)) {
+          //if (String.isBlank(absenceDay.Migration_ID__c)) {
             MSBCAPI.CreateEmployeeAbsencesRequest employeeRequest = new MSBCAPI.CreateEmployeeAbsencesRequest();
-            employeeRequest.employeeNo = 'CM-00007'; //employeeMap.get(absence.flair__EmployeeId__c).ERP_Resource_No__c;
-            employeeRequest.resourceNo = 'CM-00007'; //employeeMap.get(absence.flair__EmployeeId__c).ERP_Resource_No__c;
+            employeeRequest.employeeNo = 'CM-00007';
+            employeeRequest.resourceNo = employeeMap.get(absence.flair__EmployeeId__c).ERP_Resource_No__c;
             employeeRequest.fromDate = DateTime.newInstance(absenceDay.flair__Day__c, Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
             employeeRequest.quantityBase = absenceDay.flair__Workload_Amount_in_Minutes__c / 60;
             employeeRequest.causeOfAbsenceCode = absence.flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c;
@@ -85,7 +129,7 @@ public with sharing class AbsenceTriggerHandler {
             params.absenceDayId = absenceDay.Id;
             params.data = employeeRequest;
             createEmployeeList.add(params);
-          }
+          //}
         }
       }
       Logger.info('CreateEmployeeAbsencesRequest records').setMessage(JSON.serialize(createEmployeeList));
@@ -101,10 +145,10 @@ public with sharing class AbsenceTriggerHandler {
       flair__Absence_Day__c[] absenceDaysToUpdate = new List<flair__Absence_Day__c>();
       for(flair__Absence__c absence : scope){ 
         for(flair__Absence_Day__c absenceDay : absence.flair__Absence_Days__r){ 
-          if (String.isBlank(absenceDay.Migration_ID__c)) {
+          //if (String.isBlank(absenceDay.Migration_ID__c)) {
             absenceDay.Migration_ID__c = absenceDayIdToMigrationId.get(absenceDay.Id);
             absenceDaysToUpdate.add(absenceDay);
-          }
+          //}
         }
       }
       Database.SaveResult[] results = Database.update(absenceDaysToUpdate, true, AccessLevel.SYSTEM_MODE);
