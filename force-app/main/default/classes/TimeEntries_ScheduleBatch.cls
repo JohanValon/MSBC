@@ -1,6 +1,7 @@
 public with sharing class TimeEntries_ScheduleBatch implements Database.Batchable<MSBCAPI.Header> , Database.Stateful , Database.AllowsCallouts , Schedulable { 
   Integer numberOfHeaders = 0;
   private String originalTransactionId;
+  private static String INTEGRATION_USER = MSBC_API_Configuration__mdt.getInstance('Production').Integration_User_Username__c	;
 
   public Iterable<MSBCAPI.Header> start(Database.BatchableContext info){
     this.originalTransactionId = Logger.getTransactionId();
@@ -28,11 +29,13 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
       employeeMap.put(employee.ERP_Resource_No__c, employee.Id);
     }
 
-    User integrationUser = [SELECT Id FROM User WHERE UserName = 'oem+searenergy@flair.hr.searsbox' LIMIT 1];
+    String integrationUserId = [SELECT Id FROM User WHERE UserName = :INTEGRATION_USER LIMIT 1]?.Id;
 
     String[] headerIdsNotToUpsert = new String[]{};
-    for(flair__Time_Entry__c timeEntry : [SELECT LastModifiedById, flair__Migration_ID__c FROM flair__Time_Entry__c WHERE flair__Migration_ID__c IN :headerIds AND LastModifiedById != :integrationUser.Id]){
-      headerIdsNotToUpsert.add(timeEntry.flair__Migration_ID__c);
+    if(integrationUserId != null){
+      for(flair__Time_Entry__c timeEntry : [SELECT LastModifiedById, flair__Migration_ID__c FROM flair__Time_Entry__c WHERE flair__Migration_ID__c IN :headerIds AND LastModifiedById != :integrationUserId]){
+        headerIdsNotToUpsert.add(timeEntry.flair__Migration_ID__c);
+      }
     }
 
     Logger.info('Processed headerIdsNotToUpsert').setMessage(JSON.serialize(headerIdsNotToUpsert));

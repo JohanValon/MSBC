@@ -1,83 +1,55 @@
 public with sharing class AbsenceTriggerHandler {
+  public static Boolean isExecuteUpdate = false;
   public AbsenceTriggerHandler() {}
 
   public void onBeforeDelete(Map<Id, flair__Absence__c> oldAbsences) {
+    flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c 
+        WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsences.keySet() AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
+
     ChainManager.instance
-    .add(new DeleteRelatedEmployeeAbsencesInMSBC(oldAbsences.keySet()))
-    .startChain();
+      .add(new AbsenceDayTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(absenceDays))
+      .startChain();
   }
     
   public void onBeforeUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
     Set<Id> oldAbsenceIds = new Set<Id>();
     for(Id key : newAbsences.keySet()) {
-      if(oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c) {
+      // if the absence is approved and the approval status has changed or the start or end date has changed
+      if(newAbsences.get(key).flair__Approval_Status__c == 'APPROVED' && (
+          oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c)) {
         oldAbsenceIds.add(key);
+        isExecuteUpdate = true;
       }
     }
-    ChainManager.instance
-    .add(new DeleteRelatedEmployeeAbsencesInMSBC(oldAbsences.keySet()))
-    .startChain();
+    if(isExecuteUpdate){
+      flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c 
+        WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsenceIds];
+      ChainManager.instance
+        .add(new AbsenceDayTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(absenceDays))
+        .startChain();
+      isExecuteUpdate = false;
+    }
   }
 
   public void onAfterUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
     Set<Id> newAbsenceIds = new Set<Id>();
     for(Id key : newAbsences.keySet()) {
-      if(oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c) {
+      // if the absence is approval status has changed and it's new value is approved or the approval status is approvoed and the start or end date has changed
+      // (oldAbsences.get(key).flair__Approval_Status__c != newAbsences.get(key).flair__Approval_Status__c && newAbsences.get(key).flair__Approval_Status__c == 'APPROVED') ||
+      // if the absence is approved and the approval status has changed or the start or end date has changed
+      if((newAbsences.get(key).flair__Approval_Status__c == 'APPROVED' && 
+          (oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c))) { 
         newAbsenceIds.add(key);
+        isExecuteUpdate = true;
       }
     }
-    ChainManager.instance
-    .add(new CreateRelatedEmployeeAbsencesInMSBC(newAbsences.keySet()))
-    .startChain();
-  }
-
-  public class DeleteRelatedEmployeeAbsencesInMSBC extends QueueLink implements Database.AllowsCallouts{
-    Set<Id> oldAbsencesIds;
-    Set<Id> absencesDaysIds = new Set<Id>();
-
-    public DeleteRelatedEmployeeAbsencesInMSBC(Set<Id> oldAbsencesIds) {
-      this.oldAbsencesIds = oldAbsencesIds;
-    }
-      
-    public DeleteRelatedEmployeeAbsencesInMSBC(Set<Id> oldAbsencesIds, Set<Id> absencesDaysIds) {
-      this.oldAbsencesIds = oldAbsencesIds;
-      this.absencesDaysIds = absencesDaysIds;  
-    }
-
-    protected override void job() {
-      flair__Absence_Day__c[] absenceDays = new flair__Absence_Day__c[]{};
-      if(!absencesDaysIds.isEmpty()){
-			absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Absence__r.flair__EmployeeId__c FROM flair__Absence_Day__c 
-        WHERE Migration_ID__c != null AND Id IN :absencesDaysIds AND flair__Absence__c IN :oldAbsencesIds AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
-      } else {
-          absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Absence__r.flair__EmployeeId__c FROM flair__Absence_Day__c 
-        WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsencesIds AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
+      if(isExecuteUpdate){
+          ChainManager.instance
+            .add(new CreateRelatedEmployeeAbsencesInMSBC(newAbsences.keySet()))
+            .startChain();
+          isExecuteUpdate = false;
       }
-      Logger.info('absenceDays records').setMessage(JSON.serialize(absenceDays));
-
-      Id[] employeeIds = new List<Id>();
-      for(flair__Absence_Day__c absenceDay : absenceDays){
-        employeeIds.add(absenceDay.flair__Absence__r.flair__EmployeeId__c);
-      }
-
-      flair__Employee__c[] employees = [SELECT flair__Entity__r.flair__Migration_ID__c FROM flair__Employee__c WHERE Id IN :employeeIds AND flair__Entity__r.Is_MSBC_Synched__c = true];
-      MSBCAPI.DeleteEmployeeAbsencesRequestParams[] deleteEmployeeList = new List<MSBCAPI.DeleteEmployeeAbsencesRequestParams>();
-      for (flair__Employee__c employee : employees) {
-        for (flair__Absence_Day__c absenceDay : absenceDays) {
-          MSBCAPI.DeleteEmployeeAbsencesRequestParams params = new MSBCAPI.DeleteEmployeeAbsencesRequestParams();
-          params.companyId = employee.flair__Entity__r.flair__Migration_ID__c;
-          params.absenceDayId = absenceDay.Migration_ID__c;
-          deleteEmployeeList.add(params);
-        }
-      }
-      Logger.info('DeleteEmployeeAbsencesRequestParams records').setMessage(JSON.serialize(deleteEmployeeList));
-      Logger.saveLog();
-
-      for(MSBCAPI.DeleteEmployeeAbsencesRequestParams params : deleteEmployeeList){
-        MSBCAPI.deleteEmployeeAbsences(params.companyId, params.absenceDayId);
-      }
-    }
-  }
+   }
 
   public class CreateRelatedEmployeeAbsencesInMSBC extends QueueLink implements Database.AllowsCallouts {
     Set<Id> newAbsencesIds;

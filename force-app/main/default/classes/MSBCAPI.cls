@@ -1,8 +1,8 @@
 public with sharing class MSBCAPI {
 
   public static final String API_ENDPOINT = 'callout:Named_Cred_01/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/';
-  public static final String ENVIRONMENT = MSBC_API_Configuration__mdt.getInstance('Dev').Environment__c;
-  private static final Integer MAX_ATTEMPTS = (Integer) MSBC_API_Configuration__mdt.getInstance('Dev').Max_Attempts__c;
+  public static final String ENVIRONMENT = MSBC_API_Configuration__mdt.getInstance('Production').Environment__c;
+  private static final Integer MAX_ATTEMPTS = (Integer) MSBC_API_Configuration__mdt.getInstance('Production').Max_Attempts__c;
   private Integer currentAttempt = 1;
 
   public String callApi(
