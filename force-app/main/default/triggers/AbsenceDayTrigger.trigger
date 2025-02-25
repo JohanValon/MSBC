@@ -1,9 +1,12 @@
-trigger AbsenceDayTrigger on flair__Absence_Day__c (after update, before delete) {
-    AbsenceDayTriggerHandler handler = new AbsenceDayTriggerHandler();
-    if (Trigger.isUpdate && Trigger.isAfter) {
-        // handler.onAfterUpdate(Trigger.oldMap, Trigger.newMap);
-    }
-    if (Trigger.isDelete) {
-        handler.onBeforeDelete(Trigger.old);
+trigger AbsenceDayTrigger on flair__Absence_Day__c (before update, after update, before delete) {
+    static final String EXECUTOR = 'AbsenceDayTriggerHandler';
+    if (Trigger.isUpdate && Trigger.isBefore) {
+        ChainManager.instance.registerExecutor(EXECUTOR);
+        AbsenceDayTriggerHandler.onBeforeUpdate(Trigger.oldMap, Trigger.newMap);
+    }else if (Trigger.isUpdate && Trigger.isAfter) {
+        AbsenceDayTriggerHandler.onAfterUpdate(Trigger.oldMap, Trigger.newMap);
+        ChainManager.instance.startChain(EXECUTOR);
+    } if (Trigger.isDelete) {
+        AbsenceDayTriggerHandler.onBeforeDelete(Trigger.old);
     }
 }

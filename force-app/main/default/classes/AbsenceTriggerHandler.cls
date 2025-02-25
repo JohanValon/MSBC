@@ -1,8 +1,8 @@
 public with sharing class AbsenceTriggerHandler {
-  public static Boolean isExecuteUpdate = false;
+  public static Boolean doExecuteUpdate = false;
   public AbsenceTriggerHandler() {}
 
-  public void onBeforeDelete(Map<Id, flair__Absence__c> oldAbsences) {
+  public static void onBeforeDelete(Map<Id, flair__Absence__c> oldAbsences) {
     flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c 
         WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsences.keySet() AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
 
@@ -11,27 +11,27 @@ public with sharing class AbsenceTriggerHandler {
       .startChain();
   }
     
-  public void onBeforeUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
+  public static void onBeforeUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
     Set<Id> oldAbsenceIds = new Set<Id>();
     for(Id key : newAbsences.keySet()) {
       // if the absence is approved and the approval status has changed or the start or end date has changed
       if(newAbsences.get(key).flair__Approval_Status__c == 'APPROVED' && (
           oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c)) {
         oldAbsenceIds.add(key);
-        isExecuteUpdate = true;
+        doExecuteUpdate = true;
       }
     }
-    if(isExecuteUpdate){
+    if(doExecuteUpdate){
       flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c 
         WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsenceIds];
       ChainManager.instance
         .add(new AbsenceDayTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(absenceDays))
         .startChain();
-      isExecuteUpdate = false;
+      doExecuteUpdate = false;
     }
   }
 
-  public void onAfterUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
+  public static void onAfterUpdate(Map<Id, flair__Absence__c> oldAbsences, Map<Id, flair__Absence__c> newAbsences) {
     Set<Id> newAbsenceIds = new Set<Id>();
     for(Id key : newAbsences.keySet()) {
       // if the absence is approval status has changed and it's new value is approved or the approval status is approvoed and the start or end date has changed
@@ -40,14 +40,14 @@ public with sharing class AbsenceTriggerHandler {
       if((newAbsences.get(key).flair__Approval_Status__c == 'APPROVED' && 
           (oldAbsences.get(key).flair__Start_Date__c != newAbsences.get(key).flair__Start_Date__c || oldAbsences.get(key).flair__End_Date__c != newAbsences.get(key).flair__End_Date__c))) { 
         newAbsenceIds.add(key);
-        isExecuteUpdate = true;
+        doExecuteUpdate = true;
       }
     }
-      if(isExecuteUpdate){
-          ChainManager.instance
-            .add(new CreateRelatedEmployeeAbsencesInMSBC(newAbsences.keySet()))
-            .startChain();
-          isExecuteUpdate = false;
+      if(doExecuteUpdate){
+        ChainManager.instance
+          .add(new CreateRelatedEmployeeAbsencesInMSBC(newAbsences.keySet()))
+          .startChain();
+        doExecuteUpdate = false;
       }
    }
 

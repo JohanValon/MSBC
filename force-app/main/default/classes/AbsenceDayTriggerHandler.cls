@@ -1,31 +1,41 @@
 public with sharing class AbsenceDayTriggerHandler {
   public AbsenceDayTriggerHandler() {}
 
-  public void onAfterUpdate(Map<Id, flair__Absence_Day__c> oldAbsenceDays, Map<Id, flair__Absence_Day__c> newAbsenceDays) {
+  public static void onBeforeUpdate(Map<Id, flair__Absence_Day__c> oldAbsenceDays, Map<Id, flair__Absence_Day__c> newAbsenceDays) {
     Set<Id> newAbsenceIds = new Set<Id>();
     Set<Id> absenceDayIds = new Set<Id>();
 
     flair__Absence_Day__c[] absenceMSBCToDelete = new List<flair__Absence_Day__c>();
     for( Id key : oldAbsenceDays.keySet() ) {
       if(newAbsenceDays.get(key).Migration_ID__c != null && (oldAbsenceDays.get(key).Migration_ID__c == newAbsenceDays.get(key).Migration_ID__c) && (oldAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c != newAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c)) {
-        absenceDayIds.add(oldAbsenceDays.get(key).flair__Absence__c);
         absenceMSBCToDelete.add(oldAbsenceDays.get(key));
       }
     }
-    
-    for(flair__Absence_Day__c absenceDay : [SELECT Id, flair__Absence__c FROM flair__Absence_Day__c WHERE Id IN :absenceDayIds AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED']) {
-      newAbsenceIds.add(absenceDay.flair__Absence__c);
-    }
 
-    if(!System.isBatch()) {
-      ChainManager.instance
+    ChainManager.instance
       .add(new DeleteRelatedEmployeeAbsencesInMSBC(absenceMSBCToDelete))
-      .add(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(newAbsenceIds, absenceDayIds))
       .startChain();
-    }
   }
 
-  public void onBeforeDelete(flair__Absence_Day__c[] oldAbsenceDays) {
+  public static void onAfterUpdate(Map<Id, flair__Absence_Day__c> oldAbsenceDays, Map<Id, flair__Absence_Day__c> newAbsenceDays) {
+    Set<Id> newAbsenceIds = new Set<Id>();
+    Set<Id> absenceDayIds = new Set<Id>();
+
+    flair__Absence_Day__c[] absenceMSBCToDelete = new List<flair__Absence_Day__c>();
+    for( Id key : oldAbsenceDays.keySet() ) {
+      if(newAbsenceDays.get(key).Migration_ID__c != null && (oldAbsenceDays.get(key).Migration_ID__c == newAbsenceDays.get(key).Migration_ID__c) && (oldAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c != newAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c)) {
+        newAbsenceIds.add(oldAbsenceDays.get(key).flair__Absence__c);
+        absenceDayIds.add(key);
+      }
+    }
+
+    ChainManager.instance
+      .add(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(newAbsenceIds, absenceDayIds))
+      .startChain();
+  }
+
+
+  public static void onBeforeDelete(flair__Absence_Day__c[] oldAbsenceDays) {
       ChainManager.instance
       .add(new DeleteRelatedEmployeeAbsencesInMSBC(oldAbsenceDays))
       .startChain();
