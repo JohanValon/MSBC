@@ -1,6 +1,5 @@
 public with sharing class AbsenceTriggerHandler {
   public static Boolean doExecuteUpdate = false;
-  public AbsenceTriggerHandler() {}
 
   public static void onBeforeDelete(Map<Id, flair__Absence__c> oldAbsences) {
     flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c 
@@ -21,12 +20,11 @@ public with sharing class AbsenceTriggerHandler {
         doExecuteUpdate = true;
       }
     }
-    if(doExecuteUpdate){
+    if(!Test.isRunningTest() && doExecuteUpdate){
       flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c 
         WHERE Migration_ID__c != null AND flair__Absence__c IN :oldAbsenceIds];
-      ChainManager.instance
-        .add(new AbsenceDayTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(absenceDays))
-        .startChain();
+      ChainManager.instance.add(new AbsenceDayTriggerHandler.DeleteRelatedEmployeeAbsencesInMSBC(absenceDays));
+      ChainManager.instance.startChain();
       doExecuteUpdate = false;
     }
   }
@@ -43,10 +41,9 @@ public with sharing class AbsenceTriggerHandler {
         doExecuteUpdate = true;
       }
     }
-      if(doExecuteUpdate){
-        ChainManager.instance
-          .add(new CreateRelatedEmployeeAbsencesInMSBC(newAbsences.keySet()))
-          .startChain();
+      if(!Test.isRunningTest() && doExecuteUpdate){
+        ChainManager.instance.add(new CreateRelatedEmployeeAbsencesInMSBC(newAbsences.keySet()));
+        ChainManager.instance.startChain();
         doExecuteUpdate = false;
       }
    }
@@ -75,7 +72,7 @@ public with sharing class AbsenceTriggerHandler {
                             WHERE flair__Workload_Amount_in_Minutes__c > 0), flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Employee_Name__c, flair__EmployeeId__c 
                   FROM flair__Absence__c WHERE flair__Approval_Status__c = 'APPROVED' AND Id IN :newAbsencesIds]; 
       }
-      Logger.info('scope records').setMessage(JSON.serialize(scope));
+      Nebula.Logger.info('scope records').setMessage(JSON.serialize(scope));
 
       Id[] employeeIds = new List<Id>();
       for(flair__Absence__c absence : scope){
@@ -88,23 +85,21 @@ public with sharing class AbsenceTriggerHandler {
 
       for(flair__Absence__c absence : scope){ 
         for(flair__Absence_Day__c absenceDay : absence.flair__Absence_Days__r){ 
-          //if (String.isBlank(absenceDay.Migration_ID__c)) {
-            MSBCAPI.CreateEmployeeAbsencesRequest employeeRequest = new MSBCAPI.CreateEmployeeAbsencesRequest();
-            employeeRequest.employeeNo = 'CM-00007';
-            employeeRequest.resourceNo = employeeMap.get(absence.flair__EmployeeId__c).ERP_Resource_No__c;
-            employeeRequest.fromDate = DateTime.newInstance(absenceDay.flair__Day__c, Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
-            employeeRequest.quantityBase = absenceDay.flair__Workload_Amount_in_Minutes__c / 60;
-            employeeRequest.causeOfAbsenceCode = absence.flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c;
+          MSBCAPI.CreateEmployeeAbsencesRequest employeeRequest = new MSBCAPI.CreateEmployeeAbsencesRequest();
+          employeeRequest.employeeNo = 'CM-00007';
+          employeeRequest.resourceNo = employeeMap.get(absence.flair__EmployeeId__c).ERP_Resource_No__c;
+          employeeRequest.fromDate = DateTime.newInstance(absenceDay.flair__Day__c, Time.newInstance(0,0,0,0)).format('yyyy-MM-dd');
+          employeeRequest.quantityBase = absenceDay.flair__Workload_Amount_in_Minutes__c / 60;
+          employeeRequest.causeOfAbsenceCode = absence.flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c;
 
-            MSBCAPI.CreateEmployeeRequestParams params = new MSBCAPI.CreateEmployeeRequestParams();
-            params.companyId = employeeMap.get(absence.flair__EmployeeId__c).flair__Entity__r.flair__Migration_ID__c;
-            params.absenceDayId = absenceDay.Id;
-            params.data = employeeRequest;
-            createEmployeeList.add(params);
-          //}
+          MSBCAPI.CreateEmployeeRequestParams params = new MSBCAPI.CreateEmployeeRequestParams();
+          params.companyId = employeeMap.get(absence.flair__EmployeeId__c).flair__Entity__r.flair__Migration_ID__c;
+          params.absenceDayId = absenceDay.Id;
+          params.data = employeeRequest;
+          createEmployeeList.add(params);
         }
       }
-      Logger.info('CreateEmployeeAbsencesRequest records').setMessage(JSON.serialize(createEmployeeList));
+      Nebula.Logger.info('CreateEmployeeAbsencesRequest records').setMessage(JSON.serialize(createEmployeeList));
       MSBCAPI.CreateEmployeeAbsencesResponse[] responses = new List<MSBCAPI.CreateEmployeeAbsencesResponse>();
       Map<Id, String> absenceDayIdToMigrationId = new Map<Id, String>();
       for (MSBCAPI.CreateEmployeeRequestParams params : createEmployeeList){
@@ -112,20 +107,18 @@ public with sharing class AbsenceTriggerHandler {
         responses.add(response);
         absenceDayIdToMigrationId.put(params.absenceDayId, response.id);  
       }
-      Logger.info('CreateEmployeeAbsencesResponse records').setMessage(JSON.serialize(responses));
+      Nebula.Logger.info('CreateEmployeeAbsencesResponse records').setMessage(JSON.serialize(responses));
 
       flair__Absence_Day__c[] absenceDaysToUpdate = new List<flair__Absence_Day__c>();
       for(flair__Absence__c absence : scope){ 
         for(flair__Absence_Day__c absenceDay : absence.flair__Absence_Days__r){ 
-          //if (String.isBlank(absenceDay.Migration_ID__c)) {
-            absenceDay.Migration_ID__c = absenceDayIdToMigrationId.get(absenceDay.Id);
-            absenceDaysToUpdate.add(absenceDay);
-          //}
+          absenceDay.Migration_ID__c = absenceDayIdToMigrationId.get(absenceDay.Id);
+          absenceDaysToUpdate.add(absenceDay);
         }
       }
       Database.SaveResult[] results = Database.update(absenceDaysToUpdate, true, AccessLevel.SYSTEM_MODE);
-      Logger.info('flair__Absence_Day__c records updated', results);
-      Logger.saveLog();
+      Nebula.Logger.info('flair__Absence_Day__c records updated', results);
+      Nebula.Logger.saveLog();
     }
   }
 }

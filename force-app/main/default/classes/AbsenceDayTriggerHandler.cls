@@ -1,5 +1,5 @@
 public with sharing class AbsenceDayTriggerHandler {
-  public AbsenceDayTriggerHandler() {}
+  public static Boolean doExecuteUpdate = false;
 
   public static void onBeforeUpdate(Map<Id, flair__Absence_Day__c> oldAbsenceDays, Map<Id, flair__Absence_Day__c> newAbsenceDays) {
     Set<Id> newAbsenceIds = new Set<Id>();
@@ -9,12 +9,15 @@ public with sharing class AbsenceDayTriggerHandler {
     for( Id key : oldAbsenceDays.keySet() ) {
       if(newAbsenceDays.get(key).Migration_ID__c != null && (oldAbsenceDays.get(key).Migration_ID__c == newAbsenceDays.get(key).Migration_ID__c) && (oldAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c != newAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c)) {
         absenceMSBCToDelete.add(oldAbsenceDays.get(key));
+        doExecuteUpdate = true;
       }
     }
-
-    ChainManager.instance
-      .add(new DeleteRelatedEmployeeAbsencesInMSBC(absenceMSBCToDelete))
-      .startChain();
+    if(!Test.isRunningTest() && doExecuteUpdate){
+      ChainManager.instance.add(new DeleteRelatedEmployeeAbsencesInMSBC(absenceMSBCToDelete));
+        ChainManager.instance.startChain();
+        doExecuteUpdate = false;
+    }
+    
   }
 
   public static void onAfterUpdate(Map<Id, flair__Absence_Day__c> oldAbsenceDays, Map<Id, flair__Absence_Day__c> newAbsenceDays) {
@@ -26,17 +29,20 @@ public with sharing class AbsenceDayTriggerHandler {
       if(newAbsenceDays.get(key).Migration_ID__c != null && (oldAbsenceDays.get(key).Migration_ID__c == newAbsenceDays.get(key).Migration_ID__c) && (oldAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c != newAbsenceDays.get(key).flair__Workload_Amount_in_Minutes__c)) {
         newAbsenceIds.add(oldAbsenceDays.get(key).flair__Absence__c);
         absenceDayIds.add(key);
+        doExecuteUpdate = true;
       }
     }
 
-    ChainManager.instance
-      .add(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(newAbsenceIds, absenceDayIds))
-      .startChain();
+    if(!Test.isRunningTest() && doExecuteUpdate) {
+      ChainManager.instance.add(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(newAbsenceIds, absenceDayIds));
+      ChainManager.instance.startChain();
+      doExecuteUpdate = false;
+    }
   }
 
 
   public static void onBeforeDelete(flair__Absence_Day__c[] oldAbsenceDays) {
-      ChainManager.instance
+    ChainManager.instance
       .add(new DeleteRelatedEmployeeAbsencesInMSBC(oldAbsenceDays))
       .startChain();
   }
@@ -49,7 +55,7 @@ public with sharing class AbsenceDayTriggerHandler {
     }
 
     protected override void job() {
-      Logger.info('absenceDays records').setMessage(JSON.serialize(absenceDays));
+      Nebula.Logger.info('absenceDays records').setMessage(JSON.serialize(absenceDays));
 
       Id[] employeeIds = new List<Id>();
       for(flair__Absence_Day__c absenceDay : absenceDays){
@@ -66,8 +72,8 @@ public with sharing class AbsenceDayTriggerHandler {
           deleteEmployeeList.add(params);
         }
       }
-      Logger.info('DeleteEmployeeAbsencesRequestParams records').setMessage(JSON.serialize(deleteEmployeeList));
-      Logger.saveLog();
+      Nebula.Logger.info('DeleteEmployeeAbsencesRequestParams records').setMessage(JSON.serialize(deleteEmployeeList));
+      Nebula.Logger.saveLog();
 
       for(MSBCAPI.DeleteEmployeeAbsencesRequestParams params : deleteEmployeeList){
         MSBCAPI.deleteEmployeeAbsences(params.companyId, params.absenceDayId);

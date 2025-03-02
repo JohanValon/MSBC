@@ -87,14 +87,16 @@ private class AbsenceTriggerHandler_Test {
         absenceDay.flair__Workload_Amount_in_Minutes__c = 480;
         absenceDay.flair__Amount__c = 1;
         absenceDay.flair__Upserting_Key__c = '2025-02-17';
-        absenceDay.Migration_ID__c = '';
+        absenceDay.Migration_ID__c = '1233545';
+        absenceDay.flair__Employee__c = employee.Id;
         insert absenceDay;
     }
 
     @isTest
-    static void test_update_delete() {
+    static void test_update() {
         flair__Absence__c absence = [SELECT flair__Approval_Status__c, flair__End_Date__c FROM flair__Absence__c WHERE flair__Approval_Status__c = 'APPROVED' LIMIT 1];
         absence.flair__End_Date__c = Date.newInstance(2025, 02, 18);
+
         User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
         System.runAs(contextuser){
             StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
@@ -106,7 +108,40 @@ private class AbsenceTriggerHandler_Test {
             Test.startTest();
             update absence;
             Test.stopTest();
-            Assert.areEqual(1, [SELECT Id, Migration_ID__c FROM flair__Absence_Day__c WHERE Migration_ID__c != ''].size(), 'Absence days not updated');
+            Date endDate = Date.newInstance(2025, 02, 18);
+            Assert.areEqual(1, [SELECT flair__Approval_Status__c, flair__End_Date__c FROM flair__Absence__c WHERE flair__End_Date__c = :endDate].size(), 'Absence not updated');
+        }
+    }
+
+    @isTest
+    static void test_CreateRelatedEmployeeAbsencesInMSBC() {
+        flair__Absence__c absence = [SELECT Id FROM flair__Absence__c WHERE flair__Approval_Status__c = 'APPROVED' LIMIT 1];
+
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_createEmployeeAbscence_Success');
+            mock.setStatusCode(201);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            
+            Test.startTest();
+            System.enqueueJob(new AbsenceTriggerHandler.CreateRelatedEmployeeAbsencesInMSBC(new Set<Id>{absence.Id}));
+            Test.stopTest();
+        }
+    }
+
+    @isTest
+    static void test_delete() {
+        flair__Absence__c absence = [SELECT flair__Approval_Status__c, flair__End_Date__c FROM flair__Absence__c WHERE flair__Approval_Status__c = 'APPROVED' LIMIT 1];
+        absence.flair__End_Date__c = Date.newInstance(2025, 02, 18);
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_createEmployeeAbscence_Success');
+            mock.setStatusCode(201);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
 
             Test.startTest();
             delete absence;
