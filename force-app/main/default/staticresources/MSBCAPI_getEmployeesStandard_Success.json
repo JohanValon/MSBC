@@ -1,0 +1,32 @@
+{
+    "@odata.context": "https://api.businesscentral.dynamics.com/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/dev_kuma_20240913/api/v2.0/$metadata#companies(5c7105db-3494-ee11-8178-000d3aea3877)/employees",
+    "value": [
+
+        {
+            "@odata.etag": "W/\"JzIwOzEzMTE4MzQ4OTAzMzk2ODM1NDkxMTswMDsn\"",
+            "id": "93aeed0c-33bd-ef11-8a6d-6045bd184e85",
+            "number": "TESTMITARBEITER",
+            "displayName": "Test Mitarbeiter",
+            "givenName": "Test",
+            "middleName": "",
+            "surname": "Mitarbeiter",
+            "jobTitle": "",
+            "addressLine1": "",
+            "addressLine2": "",
+            "city": "",
+            "state": "",
+            "country": "",
+            "postalCode": "",
+            "phoneNumber": "",
+            "mobilePhone": "",
+            "email": "",
+            "personalEmail": "",
+            "employmentDate": "0001-01-01",
+            "terminationDate": "0001-01-01",
+            "status": "Active",
+            "birthDate": "0001-01-01",
+            "statisticsGroupCode": "",
+            "lastModifiedDateTime": "2024-12-18T11:27:59.113Z"
+        }
+    ]
+}

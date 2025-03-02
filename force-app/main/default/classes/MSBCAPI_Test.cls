@@ -156,13 +156,13 @@ private class MSBCAPI_Test {
             Test.setMock(HttpCalloutMock.class, mock);
             Test.startTest();
             flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
-            MSBCAPI.CreateEmployeeRequest requestBody = new MSBCAPI.CreateEmployeeRequest();
+            MSBCAPI.CreateEmployeeAbsencesRequest requestBody = new MSBCAPI.CreateEmployeeAbsencesRequest();
             requestBody.employeeNo = 'TESTMITARBEITER';
             requestBody.resourceNo = 'APU' ;
             requestBody.fromDate = '2025-01-06' ;
             requestBody.causeOfAbsenceCode = 'VACATION' ;
             requestBody.quantityBase = 5.0 ;
-            MSBCAPI.CreateEmployeeResponse results = MSBCAPI.createEmployeeAbscence(entity.flair__Migration_ID__c, requestBody);
+            MSBCAPI.CreateEmployeeAbsencesResponse results = MSBCAPI.createEmployeeAbscence(entity.flair__Migration_ID__c, requestBody);
             Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
             Test.stopTest();
         }
@@ -181,6 +181,77 @@ private class MSBCAPI_Test {
             flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
             MSBCAPI.EmployeeAbsences results = MSBCAPI.getEmployeeAbsences(entity.flair__Migration_ID__c);
             Assert.areEqual(String.isBlank(results.odataContext), false, 'odataContext is blank');
+            Test.stopTest();
+        }
+    }
+
+    @isTest
+    static void test_deleteEmployeeAbsences(){
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_getEmployeeAbsences_Success');
+            mock.setStatusCode(200);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            Test.startTest();
+            flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
+            MSBCAPI.deleteEmployeeAbsences(entity.flair__Migration_ID__c, '00000000-0000-0000-0000-000000000000' );
+            Test.stopTest();
+        }
+    }
+
+    @isTest
+    static void test_400(){
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_getEmployeeAbsences_Success');
+            mock.setStatusCode(400);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            Test.startTest();
+            flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
+            try {
+                MSBCAPI.deleteEmployeeAbsences(entity.flair__Migration_ID__c, '00000000-0000-0000-0000-000000000000' );
+            } catch(Exception e) {
+                Assert.areEqual('An MSBCAPI Callout failed', e.getMessage());
+            }
+            Test.stopTest();
+        }
+    }
+
+    @isTest
+    static void test_300(){
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_getEmployeeAbsences_Success');
+            mock.setStatusCode(300);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            Test.startTest();
+            flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
+            try {
+                MSBCAPI.deleteEmployeeAbsences(entity.flair__Migration_ID__c, '00000000-0000-0000-0000-000000000000' );
+            } catch(Exception e) {
+                Assert.areEqual('An MSBCAPI Callout failed', e.getMessage());
+            }
+            Test.stopTest();
+        }
+    }
+
+    @isTest
+    static void test_Exception(){
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        System.runAs(contextuser){
+            Test.startTest();
+            flair__Entity__c entity = [SELECT Id, flair__Migration_ID__c FROM flair__Entity__c WHERE Name = 'Con4Mare GmbH & Cie. KG'];
+            try {
+                MSBCAPI.deleteEmployeeAbsences(entity.flair__Migration_ID__c, '00000000-0000-0000-0000-000000000000' );
+            } catch(Exception e) {
+                Assert.areEqual('An MSBCAPI Callout failed', e.getMessage());
+            }
             Test.stopTest();
         }
     }

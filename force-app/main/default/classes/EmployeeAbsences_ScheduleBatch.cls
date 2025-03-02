@@ -74,16 +74,11 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
         Database.executeBatch(new EmployeeAbsences_ScheduleBatch());
     }
 
-    public static void start(Integer hour){
-        String jobName = 'EmployeeAbsences_ScheduleBatch';
-        if (hour == 0) 
-            Database.executebatch(new EmployeeAbsences_ScheduleBatch());
-        else {
-            jobName += ' - ' + Datetime.now().format();
-            String cron = '0 0 ' + String.valueof(hour) + ' * * ?';
-            Logger.info('Scheduling EmployeeAbsences_ScheduleBatch with cron: ' + cron);
-            System.schedule(jobName, cron, new EmployeeAbsences_ScheduleBatch());
-        }
+    public static void start(){
+        String jobName = 'EmployeeAbsences_ScheduleBatch' + ' - ' + Datetime.now().format();
+        String cron = '0 0 * * * ?'; //Run Every hour
+        Logger.info('Scheduling EmployeeAbsences_ScheduleBatch with cron: ' + cron);
+        System.schedule(jobName, cron, new EmployeeAbsences_ScheduleBatch());
     }
 
     public class CreateEmployeeRequestParams {

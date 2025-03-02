@@ -1,7 +1,7 @@
 public with sharing class CalloutRetryHandler implements Schedulable {
   //Add these the custom metadata setting
-  private static final Integer DELAY_TIME_MINUTES = (Integer) MSBC_API_Configuration__mdt.getInstance('Dev').Delay_Time_in_Minutes__c; // Delay before retrying
-  private static  String[] integrationUserEmails = MSBC_API_Configuration__mdt.getInstance('Dev').Emails_To_Notify__c.split(';'); // Email addresses to notify
+  private static final Integer DELAY_TIME_MINUTES = (Integer) MSBC_API_Configuration__mdt.getInstance('Production').Delay_Time_in_Minutes__c; // Delay before retrying
+  private static  String[] integrationUserEmails = MSBC_API_Configuration__mdt.getInstance('Production').Emails_To_Notify__c.split(';'); // Email addresses to notify
 
   private String requestEndpoint;
   private String requestMethod;

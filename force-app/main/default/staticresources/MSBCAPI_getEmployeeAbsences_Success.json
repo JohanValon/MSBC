@@ -1,0 +1,35 @@
+{
+    "@odata.context": "https://api.businesscentral.dynamics.com/v2.0/128f5fbc-6272-475d-a3c5-fd73bfd47dd3/dev_kuma_20240913/api/kvs/flair/v1.0/$metadata#companies(5c7105db-3494-ee11-8178-000d3aea3877)/employeeAbsences",
+    "value": [
+
+        {
+            "@odata.etag": "W/\"JzE5OzUxMjg3NTMxODM0ODA2NjY1NDUxOzAwOyc=\"",
+            "id": "b5fdf0b3-e2ca-ef11-8a6d-002248e4b42c",
+            "employeeNo": "TESTMITARBEITER",
+            "resourceNo": "APU",
+            "fromDate": "2025-01-05",
+            "causeOfAbsenceCode": "VACATION",
+            "quantityBase": 2
+        },
+
+        {
+            "@odata.etag": "W/\"JzE5OzcyMzE4NDUyMDQ2NTM4Mzk5MTgxOzAwOyc=\"",
+            "id": "94be6cc0-e2ca-ef11-8a6d-002248e4b42c",
+            "employeeNo": "TESTMITARBEITER",
+            "resourceNo": "APU",
+            "fromDate": "2025-01-05",
+            "causeOfAbsenceCode": "VACATION",
+            "quantityBase": 2
+        },
+
+        {
+            "@odata.etag": "W/\"JzIwOzEwOTE5MjYyNzQ1NDc3NzUwNzk3MTswMDsn\"",
+            "id": "4406142c-78d0-ef11-b8ec-6045bd17b684",
+            "employeeNo": "TESTMITARBEITER",
+            "resourceNo": "APU",
+            "fromDate": "2025-01-06",
+            "causeOfAbsenceCode": "VACATION",
+            "quantityBase": 2
+        }
+    ]
+}

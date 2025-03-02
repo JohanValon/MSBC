@@ -20,7 +20,7 @@
  * See the Apex Language Reference for more information about Testing and Code Coverage.
  */
 @isTest
-private class EmployeeAbsences_ScheduleBatch_Test {
+private class AbsenceDayTriggerHandler_Test {
 
     @TestSetup
     static void setup(){
@@ -76,7 +76,7 @@ private class EmployeeAbsences_ScheduleBatch_Test {
         absence.flair__Employee_Absence_Category__c = employeeAbsenceCategory.Id;
         absence.flair__Approval_Status__c = 'APPROVED';
         absence.flair__Start_Date__c = Date.newInstance(2025, 02, 17);
-        absence.flair__End_Date__c = Date.newInstance(2025, 02, 17);
+        absence.flair__End_Date__c = Date.newInstance(2025, 02, 18);
         absence.flair__Start_Time__c = Time.newInstance(00, 00, 00, 00);
         absence.flair__End_Time__c = Time.newInstance(23, 59, 00, 00);
         insert absence;
@@ -87,12 +87,21 @@ private class EmployeeAbsences_ScheduleBatch_Test {
         absenceDay.flair__Workload_Amount_in_Minutes__c = 480;
         absenceDay.flair__Amount__c = 1;
         absenceDay.flair__Upserting_Key__c = '2025-02-17';
-        absenceDay.Migration_ID__c = '';
+        absenceDay.Migration_ID__c = '1233545';
         insert absenceDay;
+
+        flair__Absence_Day__c absenceDay2 = new flair__Absence_Day__c();
+        absenceDay2.flair__Absence__c = absence.Id;
+        absenceDay2.flair__Day__c = Date.newInstance(2025, 02, 18);
+        absenceDay2.flair__Workload_Amount_in_Minutes__c = 480;
+        absenceDay2.flair__Amount__c = 1;
+        absenceDay2.flair__Upserting_Key__c = '2025-02-18';
+        absenceDay2.Migration_ID__c = '45678954';
+        insert absenceDay2;
     }
 
     @isTest
-    static void test_batch() {
+    static void test_update() {
         User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
         System.runAs(contextuser){
             StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
@@ -100,29 +109,35 @@ private class EmployeeAbsences_ScheduleBatch_Test {
             mock.setStatusCode(201);
             mock.setHeader('Content-Type', 'application/json');
             Test.setMock(HttpCalloutMock.class, mock);
+
+            flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c WHERE Migration_ID__c != null AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
+            Assert.areEqual(2, absenceDays.size(), 'Absence days not created');
+            
             Test.startTest();
-            Database.executeBatch(new EmployeeAbsences_ScheduleBatch());
+            absenceDays[0].flair__Workload_Amount_in_Minutes__c = 240;
+            update absenceDays[0];
             Test.stopTest();
-            Assert.areEqual(1, [SELECT Id, Migration_ID__c FROM flair__Absence_Day__c WHERE Migration_ID__c != ''].size(), 'Absence days not updated');
+            Assert.areEqual(1, [SELECT Id, Migration_ID__c FROM flair__Absence_Day__c WHERE flair__Workload_Amount_in_Minutes__c = 240].size(), 'Absence days not updated');
         }
-        
     }
 
     @isTest
-    static void test_schedule() {
+    static void test_delete() {
         User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
         System.runAs(contextuser){
             StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
             mock.setStaticResource('MSBCAPI_createEmployeeAbscence_Success');
-            mock.setStatusCode(200);
+            mock.setStatusCode(201);
             mock.setHeader('Content-Type', 'application/json');
             Test.setMock(HttpCalloutMock.class, mock);
+
+            flair__Absence_Day__c[] absenceDays = [SELECT Id, Migration_ID__c, flair__Absence__c, flair__Employee__c FROM flair__Absence_Day__c WHERE Migration_ID__c != null AND flair__Absence__r.flair__Approval_Status__c = 'APPROVED'];
+            Assert.areEqual(2, absenceDays.size(), 'Absence days not created');
+
             Test.startTest();
-            EmployeeAbsences_ScheduleBatch.start();
+            delete absenceDays[1];
             Test.stopTest();
-            CronTrigger ct = [SELECT Id, CronExpression, TimesTriggered, NextFireTime FROM CronTrigger WHERE CronExpression = '0 0 * * * ?'];
-            Datetime today = Datetime.now().addHours(1);
-            System.assertEquals(Datetime.newInstance(today.year(), today.month(), today.day(), today.hour(), 0, 0).time(), ct.NextFireTime.time(), 'Job not scheduled in the next hour');
-        } 
+            Assert.areEqual(1, [SELECT Id, Migration_ID__c FROM flair__Absence_Day__c].size(), 'One absence day was not deleted');
+        }
     }
 }

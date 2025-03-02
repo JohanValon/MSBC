@@ -10,6 +10,6 @@ public with sharing class CalloutRetryHandlerQueueable implements Queueable, Dat
     }
 
     public void execute(QueueableContext context) {
-        MSBCAPI.callAPI(requestEndpoint, requestMethod, body);       
+        new MSBCAPI().callAPI(requestEndpoint, requestMethod, body);       
     }
 }
