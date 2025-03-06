@@ -88,6 +88,7 @@ private class AbsenceDayTriggerHandler_Test {
         absenceDay.flair__Amount__c = 1;
         absenceDay.flair__Upserting_Key__c = '2025-02-17';
         absenceDay.Migration_ID__c = '1233545';
+        absenceDay.flair__Employee__c = employee.Id;
         insert absenceDay;
 
         flair__Absence_Day__c absenceDay2 = new flair__Absence_Day__c();
@@ -97,6 +98,7 @@ private class AbsenceDayTriggerHandler_Test {
         absenceDay2.flair__Amount__c = 1;
         absenceDay2.flair__Upserting_Key__c = '2025-02-18';
         absenceDay2.Migration_ID__c = '45678954';
+        absenceDay2.flair__Employee__c = employee.Id;
         insert absenceDay2;
     }
 
@@ -135,9 +137,9 @@ private class AbsenceDayTriggerHandler_Test {
             Assert.areEqual(2, absenceDays.size(), 'Absence days not created');
 
             Test.startTest();
-            delete absenceDays[1];
+            delete absenceDays;
             Test.stopTest();
-            Assert.areEqual(1, [SELECT Id, Migration_ID__c FROM flair__Absence_Day__c].size(), 'One absence day was not deleted');
+            Assert.areEqual(0, [SELECT Id, Migration_ID__c FROM flair__Absence_Day__c WHERE Migration_ID__c IN (:absenceDays[0].Id, :absenceDays[1].Id)].size(), 'Both absence days was not deleted');
         }
     }
 }

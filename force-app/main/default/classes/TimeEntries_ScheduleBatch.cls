@@ -4,16 +4,16 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
   private static String INTEGRATION_USER = MSBC_API_Configuration__mdt.getInstance('Production').Integration_User_Username__c	;
 
   public Iterable<MSBCAPI.Header> start(Database.BatchableContext info){
-    this.originalTransactionId = Logger.getTransactionId();
+    this.originalTransactionId = Nebula.Logger.getTransactionId();
 
-    Logger.info('Starting TimeEntries_ScheduleBatch');
-    Logger.saveLog();
+    Nebula.Logger.info('Starting TimeEntries_ScheduleBatch');
+    Nebula.Logger.saveLog();
   
     return new MSBCAPI_HeaderIterable();
   }
 
   public void execute(Database.BatchableContext info, MSBCAPI.Header[] scope){
-    Logger.setParentLogTransactionId(this.originalTransactionId);
+    Nebula.Logger.setParentLogTransactionId(this.originalTransactionId);
 
 		flair__Time_Entry__c[] timeEntries = new List<flair__Time_Entry__c>();
     Set<String> ERP_ResourceNumbers = new Set<String>();
@@ -38,9 +38,9 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
       }
     }
 
-    Logger.info('Processed headerIdsNotToUpsert').setMessage(JSON.serialize(headerIdsNotToUpsert));
+    Nebula.Logger.info('Processed headerIdsNotToUpsert').setMessage(JSON.serialize(headerIdsNotToUpsert));
     for(MSBCAPI.Header header : scope){
-      if(!headerIdsNotToUpsert.contains(header.id)){
+      if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.resNo) != null){
         flair__Time_Entry__c timeEntry = new flair__Time_Entry__c();
         timeEntry.flair__Employee__c = employeeMap.get(header.resNo);
         timeEntry.flair__Migration_ID__c = header.id;
@@ -55,7 +55,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
 
     numberOfHeaders += scope.size();
     Database.UpsertResult[] timeEntriesResults = Database.upsert(timeEntries, flair__Time_Entry__c.flair__Migration_ID__c, true, AccessLevel.SYSTEM_MODE);
-    Logger.info('Processed time entry records', timeEntriesResults);
+    Nebula.Logger.info('Processed time entry records', timeEntriesResults);
 
 		flair__Time_Entry_Break__c[] timeBreaks = new List<flair__Time_Entry_Break__c>();
     for(flair__Time_Entry__c  timeEntry : [SELECT Id, flair__Start_Datetime__c, flair__Migration_ID__c FROM flair__Time_Entry__c WHERE flair__Migration_ID__c IN :breakTimesByHeaderIds.keySet()]){
@@ -68,7 +68,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     }
     
     Database.UpsertResult[] timeBreaksResults = Database.upsert(timeBreaks, flair__Time_Entry_Break__c.flair__Migration_ID__c, true, AccessLevel.SYSTEM_MODE);
-    Logger.info('Processed time entry break records', timeBreaksResults);
+    Nebula.Logger.info('Processed time entry break records', timeBreaksResults);
 
     Map<String, flair__Time_Entry__c> timeEntriesProcessedMap = new Map<String, flair__Time_Entry__c>();
     flair__Time_Entry__c[] timeEntriesToDelete = new List<flair__Time_Entry__c>();
@@ -88,17 +88,17 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
       }
     }
 
-    Logger.info('Kept time entries', timeEntriesProcessedMap.values());
+    Nebula.Logger.info('Kept time entries', timeEntriesProcessedMap.values());
     Database.SaveResult[] timeEntryDeleteResults = Database.update(timeEntriesToDelete, true, AccessLevel.SYSTEM_MODE);
-    Logger.info('Time entry records Marked to delete', timeEntryDeleteResults);
-    Logger.saveLog();
+    Nebula.Logger.info('Time entry records Marked to delete', timeEntryDeleteResults);
+    Nebula.Logger.saveLog();
   }
 
   public void finish(Database.BatchableContext info){
-    Logger.info('Number of Headers processed: ' + numberOfHeaders);
-    Logger.setParentLogTransactionId(this.originalTransactionId);
-    Logger.info('Finishing running TimeEntries_ScheduleBatch');
-    Logger.saveLog();
+    Nebula.Logger.info('Number of Headers processed: ' + numberOfHeaders);
+    Nebula.Logger.setParentLogTransactionId(this.originalTransactionId);
+    Nebula.Logger.info('Finishing running TimeEntries_ScheduleBatch');
+    Nebula.Logger.saveLog();
   }
 
   public void execute(SchedulableContext sc) {
@@ -108,7 +108,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
   public static void start(){
     String jobName = 'TimeEntries_ScheduleBatch' + ' - ' + Datetime.now().format();
     String cron = '0 0 1 ? * *'; //Every day at 1:AM hour
-		Logger.info('Scheduling TimeEntries_ScheduleBatch with cron: ' + cron);
+		Nebula.Logger.info('Scheduling TimeEntries_ScheduleBatch with cron: ' + cron);
     System.schedule(jobName, cron, new EmployeeAbsences_ScheduleBatch());
   }
 }

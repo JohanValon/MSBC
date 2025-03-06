@@ -77,7 +77,46 @@ private class TimeEntries_ScheduleBatch_Test {
             Test.stopTest();
             Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry__c WHERE flair__Approval_Status__c = 'PENDING'].size(), 'Time entries not created');
             Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry_Break__c WHERE flair__Total_Break_Period_in_Hours__c != 0].size(), 'Time entry breaks not created');
+        }
+    }
 
+    @isTest
+    static void test_batch_mark_records_to_delete() {
+        User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
+        Id employeeId = [SELECT Id FROM flair__Employee__c WHERE ERP_Resource_No__c = 'APU' LIMIT 1].Id;
+
+        System.runAs(contextuser){
+
+            StaticResource sr = [SELECT Body FROM StaticResource WHERE Name = 'MSBCAPI_getHeaders_Success'];
+            String response = sr.Body.toString();
+            response = response.replace('"date":', '"xdate":');
+            response = response.replace('"@odata.context":', '"odataContext":');
+            response = response.replace('"@odata.etag":', '"odataEtag":');
+            MSBCAPI.PostedZDEHeaders postedHeaders = (MSBCAPI.PostedZDEHeaders) JSON.deserialize(response, MSBCAPI.PostedZDEHeaders.class);
+
+            flair__Time_Entry__c[] timeEntries = new List<flair__Time_Entry__c>();
+            for( MSBCAPI.Header header : postedHeaders.value ) {
+                flair__Time_Entry__c timeEntry = new flair__Time_Entry__c();
+                timeEntry.flair__Employee__c = employeeId;
+                timeEntry.flair__Migration_ID__c = header.id;
+                timeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
+                timeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
+                timeEntry.odata_etag__c = header.odataEtag;
+                timeEntry.flair__Approval_Status__c = 'PENDING';
+                timeEntries.add(timeEntry);
+            }
+            insert timeEntries;
+
+            StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+            mock.setStaticResource('MSBCAPI_getHeaders_Success_Update');
+            mock.setStatusCode(200);
+            mock.setHeader('Content-Type', 'application/json');
+            Test.setMock(HttpCalloutMock.class, mock);
+            Test.startTest();
+            Database.executebatch(new TimeEntries_ScheduleBatch());
+            Test.stopTest();
+            Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry__c WHERE To_Delete__c = true].size(), 'Time entries has not been marked as to delete');
+            Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry__c WHERE To_Delete__c = false].size(), 'Time entries has not been updated');
         }
     }
 

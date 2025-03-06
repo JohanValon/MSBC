@@ -79,18 +79,18 @@ public with sharing class MSBCAPI {
   }
 
   public static EmployeesFlair getEmployeesFlair(String companyId) {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employees?$filter=status eq \'Active\'';
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employees?$filter=status+eq+\'Active\'';
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetEmployeesFlair(new MSBCAPI().callApi(requestEndpoint, 'GET', null));
   }
 
   public static EmployeesStandard getEmployeesStandard(String companyId) {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies(' + companyId + ')/employees';
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/v2.0/companies(' + companyId + ')/employees?$filter=status+eq+\'Active\'';
     return parseGetEmployeesStandard(new MSBCAPI().callApi(requestEndpoint, 'GET', null));
   }
 
   public static Companies getAvailableCompanies() {
-    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies'; // $filter=resNo eq 'APU' and date gt 2024-01-01&$skip=100
+    String requestEndpoint = API_ENDPOINT + ENVIRONMENT + '/api/kvs/flair/v1.0/companies';
     requestEndpoint = requestEndpoint.replace(' ', '+');
     return parseGetAvailableCompanies(new MSBCAPI().callApi(requestEndpoint, 'GET', null));
   }
