@@ -109,6 +109,6 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     String jobName = 'TimeEntries_ScheduleBatch' + ' - ' + Datetime.now().format();
     String cron = '0 0 1 ? * *'; //Every day at 1:AM hour
 		Nebula.Logger.info('Scheduling TimeEntries_ScheduleBatch with cron: ' + cron);
-    System.schedule(jobName, cron, new EmployeeAbsences_ScheduleBatch());
+    System.schedule(jobName, cron, new TimeEntries_ScheduleBatch());
   }
 }
