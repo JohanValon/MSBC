@@ -47,7 +47,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
         timeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
         timeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
         timeEntry.odata_etag__c = header.odataEtag;
-        timeEntry.flair__Approval_Status__c = 'PENDING';
+        timeEntry.flair__Approval_Status__c = 'APPROVED';
         timeEntries.add(timeEntry);
         breakTimesByHeaderIds.put(header.id, header.breakTime);
       }

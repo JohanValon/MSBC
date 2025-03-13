@@ -75,7 +75,7 @@ private class TimeEntries_ScheduleBatch_Test {
             Test.startTest();
             Database.executebatch(new TimeEntries_ScheduleBatch());
             Test.stopTest();
-            Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry__c WHERE flair__Approval_Status__c = 'PENDING'].size(), 'Time entries not created');
+            Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry__c WHERE flair__Approval_Status__c = 'APPROVED'].size(), 'Time entries not created');
             Assert.areEqual(5, [SELECT Id FROM flair__Time_Entry_Break__c WHERE flair__Total_Break_Period_in_Hours__c != 0].size(), 'Time entry breaks not created');
         }
     }
@@ -102,7 +102,7 @@ private class TimeEntries_ScheduleBatch_Test {
                 timeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
                 timeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
                 timeEntry.odata_etag__c = header.odataEtag;
-                timeEntry.flair__Approval_Status__c = 'PENDING';
+                timeEntry.flair__Approval_Status__c = 'APPROVED';
                 timeEntries.add(timeEntry);
             }
             insert timeEntries;
