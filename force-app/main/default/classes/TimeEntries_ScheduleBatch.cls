@@ -39,17 +39,29 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     }
 
     Nebula.Logger.info('Processed headerIdsNotToUpsert').setMessage(JSON.serialize(headerIdsNotToUpsert));
-    for(MSBCAPI.Header header : scope){
-      if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.resNo) != null){
-        flair__Time_Entry__c timeEntry = new flair__Time_Entry__c();
-        timeEntry.flair__Employee__c = employeeMap.get(header.resNo);
-        timeEntry.flair__Migration_ID__c = header.id;
-        timeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
-        timeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
-        timeEntry.odata_etag__c = header.odataEtag;
-        timeEntry.flair__Approval_Status__c = 'APPROVED';
-        timeEntries.add(timeEntry);
-        breakTimesByHeaderIds.put(header.id, header.breakTime);
+    
+    flair__Time_Entry__c[] timeEntriesToDelete = new List<flair__Time_Entry__c>();
+    for(flair__Time_Entry__c  timeEntry : [SELECT Id, flair__Start_Datetime__c, flair__Employee__r.ERP_Resource_No__c, CreatedDate FROM flair__Time_Entry__c WHERE flair__Employee__c IN :employeeMap.values() AND flair__Start_Datetime__c >= :DateTime.newInstance(System.today().addMonths(-2).toStartOfMonth(), Time.newInstance(0,0,0,0))]) {
+      Boolean isMatchingTimeEntryFound = false;
+      for(MSBCAPI.Header header : scope){
+        if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.resNo) != null){
+          flair__Time_Entry__c timeEntry = new flair__Time_Entry__c();
+          timeEntry.flair__Employee__c = employeeMap.get(header.resNo);
+          timeEntry.flair__Migration_ID__c = header.id;
+          timeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
+          timeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
+          timeEntry.odata_etag__c = header.odataEtag;
+          timeEntry.flair__Approval_Status__c = 'APPROVED';
+          timeEntries.add(timeEntry);
+          breakTimesByHeaderIds.put(header.id, header.breakTime);
+        }
+        if (timeEntry.flair__Migration_ID__c == header.id) {
+          isMatchingTimeEntryFound = true;
+        }
+      }
+      if(!isMatchingTimeEntryFound){ 
+        timeEntry.To_Delete__c = !isMatchingTimeEntryFound;
+        timeEntriesToDelete.add(timeEntry);
       }
     }
 
@@ -71,7 +83,6 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     Nebula.Logger.info('Processed time entry break records', timeBreaksResults);
 
     Map<String, flair__Time_Entry__c> timeEntriesProcessedMap = new Map<String, flair__Time_Entry__c>();
-    flair__Time_Entry__c[] timeEntriesToDelete = new List<flair__Time_Entry__c>();
     for(flair__Time_Entry__c  timeEntry : [SELECT Id, flair__Start_Datetime__c, flair__Employee__r.ERP_Resource_No__c, CreatedDate FROM flair__Time_Entry__c WHERE flair__Employee__c IN :employeeMap.values()]) {
       String key = timeEntry.flair__Employee__r.ERP_Resource_No__c + timeEntry.flair__Start_Datetime__c.format('yyyy-MM-dd');
       if (!timeEntriesProcessedMap.containsKey(key)) {
