@@ -45,14 +45,14 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
       Boolean isMatchingTimeEntryFound = false;
       for(MSBCAPI.Header header : scope){
         if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.resNo) != null){
-          flair__Time_Entry__c timeEntry = new flair__Time_Entry__c();
-          timeEntry.flair__Employee__c = employeeMap.get(header.resNo);
-          timeEntry.flair__Migration_ID__c = header.id;
-          timeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
-          timeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
-          timeEntry.odata_etag__c = header.odataEtag;
-          timeEntry.flair__Approval_Status__c = 'APPROVED';
-          timeEntries.add(timeEntry);
+          flair__Time_Entry__c newTimeEntry = new flair__Time_Entry__c();
+          newTimeEntry.flair__Employee__c = employeeMap.get(header.resNo);
+          newTimeEntry.flair__Migration_ID__c = header.id;
+          newTimeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
+          newTimeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
+          newTimeEntry.odata_etag__c = header.odataEtag;
+          newTimeEntry.flair__Approval_Status__c = 'APPROVED';
+          timeEntries.add(newTimeEntry);
           breakTimesByHeaderIds.put(header.id, header.breakTime);
         }
         if (timeEntry.flair__Migration_ID__c == header.id) {
