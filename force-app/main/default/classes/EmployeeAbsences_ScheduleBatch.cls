@@ -4,9 +4,9 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
     String query = 'SELECT (SELECT Id, Migration_ID__c, flair__Day__c, flair__Workload_Amount_in_Minutes__c FROM flair__Absence_Days__r WHERE flair__Workload_Amount_in_Minutes__c  > 0), flair__Employee_Absence_Category__r.flair__Absence_Category__r.Absence_Code__c, flair__Start_Date__c, flair__Employee_Name__c, flair__EmployeeId__c FROM flair__Absence__c WHERE flair__Approval_Status__c  = \'APPROVED\'';
 
     public Database.QueryLocator start(Database.BatchableContext bc){
-        this.originalTransactionId = Logger.getTransactionId();
-        Logger.info('Starting EmployeeAbsences_ScheduleBatch');
-        Logger.saveLog();
+        this.originalTransactionId = Nebula.Logger.getTransactionId();
+        Nebula.Logger.info('Starting EmployeeAbsences_ScheduleBatch');
+        Nebula.Logger.saveLog();
         return Database.getQueryLocator(query);
     }
 
@@ -38,7 +38,7 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
                 }
             }
         }
-        Logger.info('CreateEmployeeAbsencesRequest records').setMessage(JSON.serialize(createEmployeeList));
+        Nebula.Logger.info('CreateEmployeeAbsencesRequest records').setMessage(JSON.serialize(createEmployeeList));
         MSBCAPI.CreateEmployeeAbsencesResponse[] responses = new List<MSBCAPI.CreateEmployeeAbsencesResponse>();
         Map<Id, String> absenceDayIdToMigrationId = new Map<Id, String>();
         for (CreateEmployeeRequestParams params : createEmployeeList){
@@ -46,7 +46,7 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
             responses.add(response);
             absenceDayIdToMigrationId.put(params.absenceDayId, response.id);    
         }
-        Logger.info('CreateEmployeeAbsencesResponse records').setMessage(JSON.serialize(responses));
+        Nebula.Logger.info('CreateEmployeeAbsencesResponse records').setMessage(JSON.serialize(responses));
 
         flair__Absence_Day__c[] absenceDaysToUpdate = new List<flair__Absence_Day__c>();
         for(flair__Absence__c absence : scope){ 
@@ -58,16 +58,16 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
             }
         }
         Database.SaveResult[] results = Database.update(absenceDaysToUpdate, true, AccessLevel.SYSTEM_MODE);
-        Logger.info('flair__Absence_Day__c records updated', results);
-        Logger.saveLog();
+        Nebula.Logger.info('flair__Absence_Day__c records updated', results);
+        Nebula.Logger.saveLog();
         numberOfAbsences += scope.size();
     }
    
     public void finish(Database.BatchableContext bc){
-        Logger.info('Number of Absences processed: ' + numberOfAbsences);
-        Logger.setParentLogTransactionId(this.originalTransactionId);
-        Logger.info('Finishing running TimeEntries_ScheduleBatch');
-        Logger.saveLog();
+        Nebula.Logger.info('Number of Absences processed: ' + numberOfAbsences);
+        Nebula.Logger.setParentLogTransactionId(this.originalTransactionId);
+        Nebula.Logger.info('Finishing running TimeEntries_ScheduleBatch');
+        Nebula.Logger.saveLog();
     }
 
     public void execute(SchedulableContext sc) {
@@ -77,7 +77,7 @@ public with sharing class EmployeeAbsences_ScheduleBatch implements Database.Bat
     public static void start(){
         String jobName = 'EmployeeAbsences_ScheduleBatch' + ' - ' + Datetime.now().format();
         String cron = '0 0 * * * ?'; //Run Every hour
-        Logger.info('Scheduling EmployeeAbsences_ScheduleBatch with cron: ' + cron);
+        Nebula.Logger.info('Scheduling EmployeeAbsences_ScheduleBatch with cron: ' + cron);
         System.schedule(jobName, cron, new EmployeeAbsences_ScheduleBatch());
     }
 
