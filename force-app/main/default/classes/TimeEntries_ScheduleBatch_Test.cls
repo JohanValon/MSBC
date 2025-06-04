@@ -58,7 +58,7 @@ private class TimeEntries_ScheduleBatch_Test {
 
         flair__Employee__c employee = new flair__Employee__c(); 
         employee.Name = 'John Doe';
-        employee.ERP_Resource_No__c = 'APU';
+        employee.Company_Personnel_Number__c = 'CM-00000';
         employee.flair__Entity__c = entity.Id;
         insert employee;
     }
@@ -83,7 +83,7 @@ private class TimeEntries_ScheduleBatch_Test {
     @isTest
     static void test_batch_mark_records_to_delete() {
         User contextuser = [SELECT Id FROM User WHERE Email = 'dummyuser@example.com'];
-        Id employeeId = [SELECT Id FROM flair__Employee__c WHERE ERP_Resource_No__c = 'APU' LIMIT 1].Id;
+        Id employeeId = [SELECT Id FROM flair__Employee__c WHERE Company_Personnel_Number__c = 'CM-00000' LIMIT 1].Id;
 
         System.runAs(contextuser){
 

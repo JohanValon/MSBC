@@ -20,7 +20,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     Map<String, Decimal> breakTimesByHeaderIds = new Map<String, Decimal>();
     Set<String> headerIds = new Set<String>();
     for(MSBCAPI.Header header : scope){
-      ERP_ResourceNumbers.add(header.resNo);
+      ERP_ResourceNumbers.add(header.employeeNo);
       headerIds.add(header.id);
     }
 
@@ -50,9 +50,9 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     }
 
     for(MSBCAPI.Header header : scope){
-      if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.resNo) != null){
+      if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.employeeNo) != null){
         flair__Time_Entry__c newTimeEntry = new flair__Time_Entry__c();
-        newTimeEntry.flair__Employee__c = employeeMap.get(header.resNo);
+        newTimeEntry.flair__Employee__c = employeeMap.get(header.employeeNo);
         newTimeEntry.flair__Migration_ID__c = header.id;
         newTimeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
         newTimeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);

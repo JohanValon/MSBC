@@ -23,28 +23,28 @@ public with sharing class MSBCAPI {
       try {
         HttpResponse response = http.send(request);
         if (String.valueOf(response.getStatusCode()).startsWith('20')) {
-          Logger.info('Callout succeeded: ' + response.getStatusCode());
+          Nebula.Logger.info('Callout succeeded: ' + response.getStatusCode());
           return response.getBody();
         } else {
-          Logger.error('An error occured while calling the API').setMessage(String.valueOf(response.getStatusCode())).setMessage(response.getStatus()).setMessage(response.getBody());
+          Nebula.Logger.error('An error occured while calling the API').setMessage(String.valueOf(response.getStatusCode())).setMessage(response.getStatus()).setMessage(response.getBody());
           currentAttempt++;
           if( new List<Integer>{400, 401, 403, 404}.contains(response.getStatusCode())){
-            Logger.error('No retry sever error. Callout failed.');
+            Nebula.Logger.error('No retry sever error. Callout failed.');
             CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
             break;
           } else {
-            Logger.error('Max retries reached. Callout failed.');
+            Nebula.Logger.error('Max retries reached. Callout failed.');
             CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, response.getBody());
             break;
           }
         }
       } catch (Exception ex) {
         currentAttempt++;
-        Logger.error('An error while calling the API').setMessage(ex.getMessage());
+        Nebula.Logger.error('An error while calling the API').setMessage(ex.getMessage());
         CalloutRetryHandler.sendNotificationEmail(requestEndpoint, requestMethod, body, ex.getMessage());
       }
     }
-    Logger.saveLog();
+    Nebula.Logger.saveLog();
     throw new CalloutException('An MSBCAPI Callout failed');
   }
 

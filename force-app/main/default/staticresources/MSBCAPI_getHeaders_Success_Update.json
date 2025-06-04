@@ -11,7 +11,10 @@
             "toTime": "19:00:00",
             "breakTime": 0.75,
             "quantity": 8,
-            "employeeNo": ""
+            "employeeNo": "CM-00000",
+            "shoringModelCode": "",
+            "createdAt": "2024-04-08T08:08:21.77Z",
+            "modifiedAt": "2025-05-16T13:53:22.19Z"
         },
 
         {
@@ -23,7 +26,10 @@
             "toTime": "20:00:00",
             "breakTime": 1,
             "quantity": 8,
-            "employeeNo": ""
+            "employeeNo": "CM-00000",
+            "shoringModelCode": "",
+            "createdAt": "2024-04-08T08:08:21.77Z",
+            "modifiedAt": "2025-05-16T13:53:22.19Z"
         },
 
         {
@@ -35,7 +41,10 @@
             "toTime": "20:00:00",
             "breakTime": 0.75,
             "quantity": 8,
-            "employeeNo": ""
+            "employeeNo": "CM-00000",
+            "shoringModelCode": "",
+            "createdAt": "2024-04-08T08:08:21.77Z",
+            "modifiedAt": "2025-05-16T13:53:22.19Z"
         },
 
         {
@@ -47,7 +56,10 @@
             "toTime": "18:30:00",
             "breakTime": 0.75,
             "quantity": 8,
-            "employeeNo": ""
+            "employeeNo": "CM-00000",
+            "shoringModelCode": "",
+            "createdAt": "2024-04-08T08:08:21.77Z",
+            "modifiedAt": "2025-05-16T13:53:22.19Z"
         },
 
         {
@@ -59,7 +71,10 @@
             "toTime": "20:00:00",
             "breakTime": 0.75,
             "quantity": 8,
-            "employeeNo": ""
+            "employeeNo": "CM-00000",
+            "shoringModelCode": "",
+            "createdAt": "2024-04-08T08:08:21.77Z",
+            "modifiedAt": "2025-05-16T13:53:22.19Z"
         }
     ]
 }
