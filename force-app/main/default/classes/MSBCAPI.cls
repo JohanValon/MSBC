@@ -183,6 +183,7 @@ public with sharing class MSBCAPI {
     public Decimal breakTime;
     public Decimal quantity;
     public String employeeNo;
+    public String shoringModelCode;
   }
 
   public class CausesOfAbsences {

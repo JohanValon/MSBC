@@ -25,8 +25,8 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     }
 
     Map<String, Id> employeeMap = new Map<String, Id>();
-    for(flair__Employee__c employee : [SELECT Id, ERP_Resource_No__c FROM flair__Employee__c WHERE ERP_Resource_No__c IN :ERP_ResourceNumbers]){
-      employeeMap.put(employee.ERP_Resource_No__c, employee.Id);
+    for(flair__Employee__c employee : [SELECT Id, Company_Personnel_Number__c FROM flair__Employee__c WHERE Company_Personnel_Number__c IN :ERP_ResourceNumbers]){
+      employeeMap.put(employee.Company_Personnel_Number__c, employee.Id);
     }
 
     String integrationUserId = [SELECT Id FROM User WHERE UserName = :INTEGRATION_USER LIMIT 1]?.Id;
@@ -40,28 +40,27 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
 
     Nebula.Logger.info('Processed headerIdsNotToUpsert').setMessage(JSON.serialize(headerIdsNotToUpsert));
     
+    // Check for Time Entries that are in MSBC but not in Salesforce and mark them for deletion if they are not in the current batch 
     flair__Time_Entry__c[] timeEntriesToDelete = new List<flair__Time_Entry__c>();
-    for(flair__Time_Entry__c  timeEntry : [SELECT Id, flair__Start_Datetime__c, flair__Employee__r.ERP_Resource_No__c, CreatedDate FROM flair__Time_Entry__c WHERE flair__Employee__c IN :employeeMap.values() AND flair__Start_Datetime__c >= :DateTime.newInstance(System.today().addMonths(-2).toStartOfMonth(), Time.newInstance(0,0,0,0))]) {
-      Boolean isMatchingTimeEntryFound = false;
-      for(MSBCAPI.Header header : scope){
-        if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.resNo) != null){
-          flair__Time_Entry__c newTimeEntry = new flair__Time_Entry__c();
-          newTimeEntry.flair__Employee__c = employeeMap.get(header.resNo);
-          newTimeEntry.flair__Migration_ID__c = header.id;
-          newTimeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
-          newTimeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
-          newTimeEntry.odata_etag__c = header.odataEtag;
-          newTimeEntry.flair__Approval_Status__c = 'APPROVED';
-          timeEntries.add(newTimeEntry);
-          breakTimesByHeaderIds.put(header.id, header.breakTime);
-        }
-        if (timeEntry.flair__Migration_ID__c == header.id) {
-          isMatchingTimeEntryFound = true;
-        }
-      }
-      if(!isMatchingTimeEntryFound){ 
-        timeEntry.To_Delete__c = !isMatchingTimeEntryFound;
-        timeEntriesToDelete.add(timeEntry);
+    for(flair__Time_Entry__c  timeEntry : [SELECT Id, To_Delete__c FROM flair__Time_Entry__c WHERE flair__Employee__c IN :employeeMap.values() 
+      AND flair__Start_Datetime__c >= :DateTime.newInstance(System.today().addMonths(-2).toStartOfMonth(), Time.newInstance(0,0,0,0)) 
+      AND flair__Approval_Status__c = 'APPROVED' AND flair__Migration_ID__c NOT IN :headerIds AND To_Delete__c = false AND LastModifiedById = :integrationUserId]){
+      timeEntry.To_Delete__c = true;
+      timeEntriesToDelete.add(timeEntry);
+    }
+
+    for(MSBCAPI.Header header : scope){
+      if(!headerIdsNotToUpsert.contains(header.id) && employeeMap.get(header.resNo) != null){
+        flair__Time_Entry__c newTimeEntry = new flair__Time_Entry__c();
+        newTimeEntry.flair__Employee__c = employeeMap.get(header.resNo);
+        newTimeEntry.flair__Migration_ID__c = header.id;
+        newTimeEntry.flair__Start_Datetime__c = Datetime.valueOf(header.xdate + ' ' + header.fromTime);
+        newTimeEntry.flair__End_Datetime__c =  Datetime.valueOf(header.xdate + ' ' + header.toTime);
+        newTimeEntry.odata_etag__c = header.odataEtag;
+        newTimeEntry.shoringModelCode__c = header.shoringModelCode == 'OFFSHORE' ? 'OFFSHORE' : '';
+        newTimeEntry.flair__Approval_Status__c = 'APPROVED';
+        timeEntries.add(newTimeEntry);
+        breakTimesByHeaderIds.put(header.id, header.breakTime);
       }
     }
 
@@ -83,8 +82,8 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
     Nebula.Logger.info('Processed time entry break records', timeBreaksResults);
 
     Map<String, flair__Time_Entry__c> timeEntriesProcessedMap = new Map<String, flair__Time_Entry__c>();
-    for(flair__Time_Entry__c  timeEntry : [SELECT Id, flair__Start_Datetime__c, flair__Employee__r.ERP_Resource_No__c, CreatedDate FROM flair__Time_Entry__c WHERE flair__Employee__c IN :employeeMap.values()]) {
-      String key = timeEntry.flair__Employee__r.ERP_Resource_No__c + timeEntry.flair__Start_Datetime__c.format('yyyy-MM-dd');
+    for(flair__Time_Entry__c  timeEntry : [SELECT Id, flair__Start_Datetime__c, flair__Employee__r.Company_Personnel_Number__c, CreatedDate FROM flair__Time_Entry__c WHERE flair__Employee__c IN :employeeMap.values() AND flair__Approval_Status__c = 'APPROVED']) {
+      String key = timeEntry.flair__Employee__r.Company_Personnel_Number__c + timeEntry.flair__Start_Datetime__c.format('yyyy-MM-dd');
       if (!timeEntriesProcessedMap.containsKey(key)) {
         timeEntriesProcessedMap.put(key, timeEntry);
       } else {
@@ -113,7 +112,7 @@ public with sharing class TimeEntries_ScheduleBatch implements Database.Batchabl
   }
 
   public void execute(SchedulableContext sc) {
-    Database.executeBatch(new TimeEntries_ScheduleBatch());
+    Database.executeBatch(new TimeEntries_ScheduleBatch(), 100);
   }
 
   public static void start(){
